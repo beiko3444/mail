@@ -8,6 +8,7 @@ const { URL } = require("url");
 const ROOT_DIR = __dirname;
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const STORE_PATH = path.join(DATA_DIR, "messages.json");
+const ALIAS_STORE_PATH = path.join(DATA_DIR, "aliases.json");
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
@@ -97,8 +98,84 @@ async function writeStore(store) {
   await fsp.writeFile(STORE_PATH, JSON.stringify(store, null, 2));
 }
 
+async function ensureAliasStore() {
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fsp.access(ALIAS_STORE_PATH, fs.constants.F_OK);
+  } catch {
+    await fsp.writeFile(ALIAS_STORE_PATH, JSON.stringify({ aliases: [] }, null, 2));
+  }
+}
+
+async function readAliasStore() {
+  await ensureAliasStore();
+  const raw = await fsp.readFile(ALIAS_STORE_PATH, "utf8");
+  try {
+    const parsed = JSON.parse(raw);
+    return { aliases: Array.isArray(parsed.aliases) ? parsed.aliases : [] };
+  } catch {
+    return { aliases: [] };
+  }
+}
+
+async function writeAliasStore(store) {
+  await ensureAliasStore();
+  await fsp.writeFile(ALIAS_STORE_PATH, JSON.stringify(store, null, 2));
+}
+
 function normalizeAddress(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function normalizeAliases(list) {
+  if (!Array.isArray(list)) {
+    return [];
+  }
+
+  const seen = new Set();
+  const output = [];
+
+  for (const item of list) {
+    const address = normalizeAddress(item);
+    if (!address || seen.has(address)) {
+      continue;
+    }
+    seen.add(address);
+    output.push(address);
+    if (output.length >= 100) {
+      break;
+    }
+  }
+
+  return output;
+}
+
+async function getAliases() {
+  const store = await readAliasStore();
+  return normalizeAliases(store.aliases);
+}
+
+async function saveAliases(aliases) {
+  const normalized = normalizeAliases(aliases);
+  await writeAliasStore({ aliases: normalized });
+  return normalized;
+}
+
+async function addAlias(address) {
+  const normalized = normalizeAddress(address);
+  if (!normalized) {
+    throw new Error("address 값이 비어 있습니다.");
+  }
+
+  const aliases = await getAliases();
+  const next = [normalized, ...aliases.filter((item) => item !== normalized)].slice(0, 100);
+  return saveAliases(next);
+}
+
+async function removeAlias(address) {
+  const normalized = normalizeAddress(address);
+  const aliases = await getAliases();
+  return saveAliases(aliases.filter((item) => item !== normalized));
 }
 
 function getAddressList(payload, key) {
@@ -361,6 +438,10 @@ function buildConfigPayload() {
     webhookPath: "/api/webhooks/resend",
     sourceMode: config.resendApiKey ? "resend-api" : "webhook-cache",
     autoRefreshSeconds: 15,
+    aliasStore: {
+      type: "file",
+      persistent: true,
+    },
   };
 }
 
@@ -447,6 +528,63 @@ async function handleApi(req, res, pathname, searchParams) {
     return;
   }
 
+  if (pathname === "/api/aliases") {
+    if (req.method === "GET") {
+      const aliases = await getAliases();
+      json(res, 200, {
+        aliases,
+        store: {
+          type: "file",
+          persistent: true,
+        },
+      });
+      return;
+    }
+
+    if (req.method === "POST") {
+      try {
+        const body = await parseJsonBody(req);
+        const aliases = await addAlias(body?.address);
+        json(res, 200, {
+          aliases,
+          store: {
+            type: "file",
+            persistent: true,
+          },
+        });
+      } catch (error) {
+        json(res, 400, { error: error.message || "주소 추가에 실패했습니다." });
+      }
+      return;
+    }
+
+    if (req.method === "DELETE") {
+      try {
+        const address = normalizeAddress(searchParams.get("address"));
+        if (!address) {
+          json(res, 400, { error: "address 쿼리가 필요합니다." });
+          return;
+        }
+
+        const aliases = await removeAlias(address);
+        json(res, 200, {
+          aliases,
+          store: {
+            type: "file",
+            persistent: true,
+          },
+        });
+      } catch (error) {
+        json(res, 400, { error: error.message || "주소 삭제에 실패했습니다." });
+      }
+      return;
+    }
+
+    res.setHeader("Allow", "GET, POST, DELETE");
+    json(res, 405, { error: "허용되지 않은 메서드입니다." });
+    return;
+  }
+
   if (pathname === "/api/messages") {
     const address = normalizeAddress(searchParams.get("address"));
     if (!address) {
@@ -523,6 +661,7 @@ async function requestListener(req, res) {
 
 async function start() {
   await ensureStore();
+  await ensureAliasStore();
   const server = http.createServer((req, res) => {
     requestListener(req, res).catch((error) => {
       json(res, 500, { error: error.message || "서버 오류가 발생했습니다." });

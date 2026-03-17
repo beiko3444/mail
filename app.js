@@ -1,7 +1,6 @@
 const AUTO_REFRESH_MS = 15000;
 const STORAGE_KEYS = {
   activeLocalPart: "xtracker-active-local-part",
-  aliases: "xtracker-saved-aliases",
 };
 
 const WORDS_A = ["alpha", "beacon", "core", "delta", "lumen", "signal", "orbit", "echo"];
@@ -10,7 +9,7 @@ const WORDS_B = ["desk", "mail", "team", "spot", "flow", "note", "pilot", "lane"
 const state = {
   config: null,
   activeAddress: "",
-  aliases: loadAliases(),
+  aliases: [],
   messages: [],
   activeMessageId: "",
   activeMessage: null,
@@ -33,20 +32,6 @@ const messageListEl = document.querySelector("#messageList");
 const messageDetailEl = document.querySelector("#messageDetail");
 const messageItemTemplateEl = document.querySelector("#messageItemTemplate");
 const aliasItemTemplateEl = document.querySelector("#aliasItemTemplate");
-
-function loadAliases() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.aliases);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveAliases() {
-  localStorage.setItem(STORAGE_KEYS.aliases, JSON.stringify(state.aliases));
-}
 
 function sanitizeLocalPart(value) {
   return value
@@ -90,14 +75,18 @@ function formatDate(value) {
   }
 }
 
-async function fetchJson(url) {
+async function requestJson(url, options = {}) {
   const response = await fetch(url, {
+    method: options.method || "GET",
     headers: {
       Accept: "application/json",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {}),
     },
+    body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  const payload = await response.json();
+  const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     throw new Error(payload.error || "요청에 실패했습니다.");
   }
@@ -162,8 +151,14 @@ function renderSessionCard() {
   }
 
   const currentAddress = state.activeAddress || "미선택";
+  const aliasStoreType =
+    state.config.aliasStore?.type === "redis-rest"
+      ? "DB"
+      : state.config.aliasStore?.persistent
+        ? "로컬"
+        : "설정 필요";
   sessionCardEl.className = "session-card";
-  sessionCardEl.textContent = `${getModeDescription()} · 도메인: ${getInboxDomain()} · 현재 주소: ${currentAddress}`;
+  sessionCardEl.textContent = `${getModeDescription()} · 주소목록 저장: ${aliasStoreType} · 도메인: ${getInboxDomain()} · 현재 주소: ${currentAddress}`;
 }
 
 function renderAliases() {
@@ -198,8 +193,12 @@ function renderAliases() {
       await activateCurrentInput();
     });
 
-    removeBtn.addEventListener("click", () => {
-      removeAlias(address);
+    removeBtn.addEventListener("click", async () => {
+      try {
+        await removeAlias(address);
+      } catch (error) {
+        setStatus(`주소 삭제에 실패했습니다: ${error.message}`, "error");
+      }
     });
 
     aliasListEl.appendChild(fragment);
@@ -331,23 +330,47 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function addAlias(address) {
-  if (!address) {
-    return;
-  }
+function normalizeAddress(value) {
+  return String(value || "").trim().toLowerCase();
+}
 
-  state.aliases = [address, ...state.aliases.filter((item) => item !== address)].slice(0, 100);
-  saveAliases();
+function applyAliases(aliases) {
+  state.aliases = Array.isArray(aliases) ? aliases.map(normalizeAddress).filter(Boolean) : [];
   renderAliases();
   renderStats();
   renderSessionCard();
 }
 
-function removeAlias(address) {
-  state.aliases = state.aliases.filter((item) => item !== address);
-  saveAliases();
+async function loadAliasesFromDb() {
+  const payload = await requestJson("/api/aliases");
+  applyAliases(payload.aliases || []);
+}
 
-  if (state.activeAddress === address) {
+async function addAlias(address) {
+  const normalized = normalizeAddress(address);
+  if (!normalized) {
+    return;
+  }
+
+  const payload = await requestJson("/api/aliases", {
+    method: "POST",
+    body: { address: normalized },
+  });
+  applyAliases(payload.aliases || []);
+}
+
+async function removeAlias(address) {
+  const normalized = normalizeAddress(address);
+  if (!normalized) {
+    return;
+  }
+
+  const payload = await requestJson(`/api/aliases?address=${encodeURIComponent(normalized)}`, {
+    method: "DELETE",
+  });
+  applyAliases(payload.aliases || []);
+
+  if (state.activeAddress === normalized) {
     stopPolling();
     state.activeAddress = "";
     state.messages = [];
@@ -361,10 +384,6 @@ function removeAlias(address) {
     renderMessageDetail();
     setStatus("선택 중인 주소를 목록에서 삭제했습니다.", "idle");
   }
-
-  renderAliases();
-  renderStats();
-  renderSessionCard();
 }
 
 function setActiveAddress(localPart) {
@@ -376,7 +395,6 @@ function setActiveAddress(localPart) {
 
   state.activeAddress = buildAddress(sanitized);
   localStorage.setItem(STORAGE_KEYS.activeLocalPart, sanitized);
-  addAlias(state.activeAddress);
   renderCurrentInbox();
   renderSessionCard();
   setStatus(`현재 주소를 ${state.activeAddress} 로 설정했습니다.`, "connected");
@@ -391,7 +409,7 @@ async function loadMessages(showFeedback = true) {
   }
 
   try {
-    const payload = await fetchJson(`/api/messages?address=${encodeURIComponent(state.activeAddress)}`);
+    const payload = await requestJson(`/api/messages?address=${encodeURIComponent(state.activeAddress)}`);
     state.messages = Array.isArray(payload.messages) ? payload.messages : [];
     renderMessages();
     renderStats();
@@ -428,7 +446,9 @@ async function openMessage(messageId, announce = true) {
   try {
     state.activeMessageId = messageId;
     renderMessages();
-    const payload = await fetchJson(`/api/messages/${encodeURIComponent(messageId)}?address=${encodeURIComponent(state.activeAddress)}`);
+    const payload = await requestJson(
+      `/api/messages/${encodeURIComponent(messageId)}?address=${encodeURIComponent(state.activeAddress)}`,
+    );
     state.activeMessage = payload;
     renderMessageDetail();
 
@@ -489,6 +509,13 @@ async function activateCurrentInput() {
     return;
   }
 
+  try {
+    await addAlias(state.activeAddress);
+  } catch (error) {
+    setStatus(`주소 저장에 실패했습니다: ${error.message}`, "error");
+    return;
+  }
+
   await loadMessages(true);
   startPolling();
 }
@@ -531,26 +558,41 @@ async function init() {
   setStatus("백엔드 구성을 확인하는 중입니다.", "idle");
 
   try {
-    state.config = await fetchJson("/api/config");
+    state.config = await requestJson("/api/config");
     previewDomainEl.textContent = `@${getInboxDomain()}`;
     renderSessionCard();
     renderStats();
     updatePreview();
+
+    let aliasLoadError = "";
+    try {
+      await loadAliasesFromDb();
+    } catch (error) {
+      aliasLoadError = error.message || "주소 목록을 불러오지 못했습니다.";
+      setStatus(`주소 목록을 불러오지 못했습니다: ${error.message}`, "error");
+    }
 
     const savedLocalPart = sanitizeLocalPart(localStorage.getItem(STORAGE_KEYS.activeLocalPart) || "");
     localPartInputEl.value = savedLocalPart || createRandomLocalPart();
     updatePreview();
     if (savedLocalPart) {
       setActiveAddress(savedLocalPart);
+      try {
+        await addAlias(state.activeAddress);
+      } catch {
+        // 주소 선택은 유지하고 메일 조회는 계속 진행합니다.
+      }
       await loadMessages(false);
       startPolling();
     } else {
-      setStatus("원하는 local-part를 입력하거나 랜덤 주소를 눌러 시작하세요.", "idle");
+      if (!aliasLoadError) {
+        setStatus("원하는 local-part를 입력하거나 랜덤 주소를 눌러 시작하세요.", "idle");
+      }
     }
 
-    if (state.config.sourceMode === "webhook-cache") {
+    if (!aliasLoadError && state.config.sourceMode === "webhook-cache") {
       setStatus("RESEND_API_KEY 가 없어 webhook 캐시 모드로 동작합니다.", "idle");
-    } else if (!state.config.apiConfigured) {
+    } else if (!aliasLoadError && !state.config.apiConfigured) {
       setStatus("RESEND_API_KEY 가 없어 메일 조회가 비활성화되어 있습니다.", "error");
     }
   } catch (error) {

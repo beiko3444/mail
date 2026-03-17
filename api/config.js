@@ -1,4 +1,5 @@
 const { json, methodNotAllowed } = require("./_lib/http");
+const { getStoreInfo } = require("./_lib/aliases-store");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
@@ -13,5 +14,6 @@ module.exports = async function handler(req, res) {
     webhookPath: "/api/webhooks/resend",
     sourceMode: process.env.RESEND_API_KEY ? "resend-api" : "disabled",
     autoRefreshSeconds: 15,
+    aliasStore: getStoreInfo(),
   });
 };

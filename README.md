@@ -6,7 +6,7 @@
 ## 포함 기능
 
 - 원하는 local-part 로 수신 주소 선택
-- 생성한 주소 목록 영구 저장 및 빠른 전환
+- 생성한 주소 목록 DB 영구 저장 및 빠른 전환
 - `@inbox.xtracker.co.kr` 실제 수신 메일 조회
 - 받은 메일 목록 조회
 - 메일 상세 본문 보기
@@ -27,6 +27,11 @@ RESEND_API_KEY=re_xxxxxxxxx
 PORT=4173
 # 선택: webhook 서명 검증을 추가할 때 사용
 RESEND_WEBHOOK_SECRET=
+# aliases DB (Vercel KV / Upstash Redis REST)
+KV_REST_API_URL=
+KV_REST_API_TOKEN=
+# 선택: aliases 저장 키 이름
+ALIASES_DB_KEY=xtracker:aliases:default
 ```
 
 ## 실행 방법
@@ -42,10 +47,13 @@ RESEND_WEBHOOK_SECRET=
 
 - `INBOX_DOMAIN=inbox.xtracker.co.kr`
 - `RESEND_API_KEY=re_xxxxxxxxx`
+- `KV_REST_API_URL=...`
+- `KV_REST_API_TOKEN=...`
 
 선택 변수:
 
 - `RESEND_WEBHOOK_SECRET`
+- `ALIASES_DB_KEY=xtracker:aliases:default`
 
 ### 2. 로컬 실행(선택)
 
@@ -65,7 +73,7 @@ node server.js
 ## 사용 흐름
 
 1. Resend에서 `inbox.xtracker.co.kr` Receiving 검증을 완료합니다.
-2. Vercel 환경변수에 `RESEND_API_KEY` 를 넣고 배포합니다.
+2. Vercel 환경변수에 `RESEND_API_KEY`, `KV_REST_API_URL`, `KV_REST_API_TOKEN` 을 넣고 배포합니다.
 3. 웹앱에서 `hello`, `support`, `test` 같은 local-part 를 입력합니다.
 4. 예를 들어 `hello@inbox.xtracker.co.kr` 로 메일을 보냅니다.
 5. 앱이 15초마다 해당 주소의 메일을 다시 확인합니다(Resend API 조회).

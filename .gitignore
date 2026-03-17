@@ -1,4 +1,5 @@
 .env
 /data/messages.json
+/data/aliases.json
 /logs/
 /.vercel/
