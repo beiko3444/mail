@@ -27,6 +27,11 @@ RESEND_API_KEY=re_xxxxxxxxx
 PORT=4173
 # 선택: webhook 서명 검증을 추가할 때 사용
 RESEND_WEBHOOK_SECRET=
+# aliases DB (Supabase REST) - 권장
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_ANON_KEY=
+ALIASES_SUPABASE_TABLE=aliases
 # aliases DB (Vercel KV / Upstash Redis REST)
 KV_REST_API_URL=
 KV_REST_API_TOKEN=
@@ -47,12 +52,16 @@ ALIASES_DB_KEY=xtracker:aliases:default
 
 - `INBOX_DOMAIN=inbox.xtracker.co.kr`
 - `RESEND_API_KEY=re_xxxxxxxxx`
-- `KV_REST_API_URL=...`
-- `KV_REST_API_TOKEN=...`
+
+aliases DB는 아래 둘 중 하나를 설정:
+
+- Supabase 사용 시(권장): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (또는 `SUPABASE_ANON_KEY`)
+- KV 사용 시: `KV_REST_API_URL`, `KV_REST_API_TOKEN`
 
 선택 변수:
 
 - `RESEND_WEBHOOK_SECRET`
+- `ALIASES_SUPABASE_TABLE=aliases`
 - `ALIASES_DB_KEY=xtracker:aliases:default`
 
 ### 2. 로컬 실행(선택)
@@ -73,11 +82,22 @@ node server.js
 ## 사용 흐름
 
 1. Resend에서 `inbox.xtracker.co.kr` Receiving 검증을 완료합니다.
-2. Vercel 환경변수에 `RESEND_API_KEY`, `KV_REST_API_URL`, `KV_REST_API_TOKEN` 을 넣고 배포합니다.
+2. Vercel 환경변수에 `RESEND_API_KEY` 와 aliases DB(Supabase 또는 KV) 변수를 넣고 배포합니다.
 3. 웹앱에서 `hello`, `support`, `test` 같은 local-part 를 입력합니다.
 4. 예를 들어 `hello@inbox.xtracker.co.kr` 로 메일을 보냅니다.
 5. 앱이 15초마다 해당 주소의 메일을 다시 확인합니다(Resend API 조회).
 6. 여러 주소를 저장해두고 목록에서 클릭해 각각의 메일함으로 전환할 수 있습니다.
+
+## Supabase 테이블 준비
+
+Supabase를 쓰면 아래 SQL을 1회 실행해주세요.
+
+```sql
+create table if not exists public.aliases (
+  address text primary key,
+  last_used_at timestamptz not null default now()
+);
+```
 
 ## 공개 webhook 연결
 

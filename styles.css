@@ -50,6 +50,16 @@ main.app {
   font-size: 1.05rem;
 }
 
+.top-inbox-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 14px;
+}
+
+.panel-tall {
+  min-height: 320px;
+}
+
 .current-address {
   margin: 0;
   font-size: 1.2rem;
@@ -362,6 +372,10 @@ pre {
 }
 
 @media (max-width: 860px) {
+  .top-inbox-grid {
+    grid-template-columns: 1fr;
+  }
+
   .split {
     grid-template-columns: 1fr;
   }

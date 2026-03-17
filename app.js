@@ -152,7 +152,7 @@ function renderSessionCard() {
 
   const currentAddress = state.activeAddress || "미선택";
   const aliasStoreType =
-    state.config.aliasStore?.type === "redis-rest"
+    state.config.aliasStore?.type === "supabase-rest" || state.config.aliasStore?.type === "redis-rest"
       ? "DB"
       : state.config.aliasStore?.persistent
         ? "로컬"
