@@ -108,7 +108,7 @@ async function fetchJson(url) {
 function setStatus(message, tone = "idle") {
   statusTextEl.textContent = message;
   connectionBadgeEl.className = `status-badge is-${tone}`;
-  connectionBadgeEl.textContent = tone === "connected" ? "연결됨" : tone === "error" ? "오류" : "대기";
+  connectionBadgeEl.textContent = tone === "connected" ? "정상" : tone === "error" ? "오류" : "대기";
 }
 
 function updatePreview() {
@@ -119,22 +119,22 @@ function updatePreview() {
 
 function getModeLabel() {
   if (state.config?.sourceMode === "webhook-cache") {
-    return "Webhook";
+    return "제한";
   }
   if (state.config?.apiConfigured) {
-    return "Live API";
+    return "정상";
   }
-  return "Setup Needed";
+  return "설정 필요";
 }
 
 function getModeDescription() {
   if (state.config?.sourceMode === "webhook-cache") {
-    return "Webhook Cache Only";
+    return "실시간 API 없이 캐시 기준으로 동작";
   }
   if (state.config?.apiConfigured) {
-    return "Resend Received Emails API";
+    return "실시간 수신 메일 조회 가능";
   }
-  return "Disabled (RESEND_API_KEY required)";
+  return "API 키 설정이 필요합니다";
 }
 
 function renderStats() {
@@ -146,44 +146,24 @@ function renderStats() {
 function renderCurrentInbox() {
   if (!state.activeAddress) {
     currentInboxEl.textContent = "주소를 설정해보세요";
-    inboxHintEl.textContent = "Resend 설정이 끝났으면 원하는 local-part를 입력해 메일을 받아보세요.";
+    inboxHintEl.textContent = "local-part를 입력하고 주소를 열면 메일이 수신됩니다.";
     return;
   }
 
   currentInboxEl.textContent = state.activeAddress;
-  inboxHintEl.textContent = `${Math.floor(AUTO_REFRESH_MS / 1000)}초마다 해당 주소의 메일을 다시 확인합니다.`;
+  inboxHintEl.textContent = `${Math.floor(AUTO_REFRESH_MS / 1000)}초마다 자동으로 새 메일을 확인합니다.`;
 }
 
 function renderSessionCard() {
   if (!state.config) {
-    sessionCardEl.className = "session-card empty-state";
-    sessionCardEl.textContent = "서버 설정을 불러오는 중입니다.";
+    sessionCardEl.className = "session-card";
+    sessionCardEl.textContent = "설정 확인 중";
     return;
   }
 
+  const currentAddress = state.activeAddress || "미선택";
   sessionCardEl.className = "session-card";
-  sessionCardEl.innerHTML = `
-    <div class="session-row">
-      <span class="session-row__label">Inbox Domain</span>
-      <strong class="session-row__value">${escapeHtml(getInboxDomain())}</strong>
-    </div>
-    <div class="session-row">
-      <span class="session-row__label">Mode</span>
-      <strong class="session-row__value">${getModeDescription()}</strong>
-    </div>
-    <div class="session-row">
-      <span class="session-row__label">Webhook Path</span>
-      <strong class="session-row__value">${escapeHtml(state.config.webhookPath)}</strong>
-    </div>
-    <div class="session-row">
-      <span class="session-row__label">Current Address</span>
-      <strong class="session-row__value">${escapeHtml(state.activeAddress || "아직 선택되지 않음")}</strong>
-    </div>
-    <div class="session-row">
-      <span class="session-row__label">Saved Aliases</span>
-      <strong class="session-row__value">${state.aliases.length}개</strong>
-    </div>
-  `;
+  sessionCardEl.textContent = `${getModeDescription()} · 도메인: ${getInboxDomain()} · 현재 주소: ${currentAddress}`;
 }
 
 function renderAliases() {
@@ -201,14 +181,26 @@ function renderAliases() {
     const item = fragment.querySelector(".alias-item");
     const addressEl = fragment.querySelector(".alias-item__address");
     const metaEl = fragment.querySelector(".alias-item__meta");
+    const openBtn = fragment.querySelector(".alias-open-btn");
+    const removeBtn = fragment.querySelector(".alias-remove-btn");
 
-    item.dataset.address = address;
     addressEl.textContent = address;
     metaEl.textContent = address === state.activeAddress ? "현재 보고 있는 주소" : "클릭해서 이 주소의 메일함 열기";
 
     if (address === state.activeAddress) {
       item.classList.add("is-active");
     }
+
+    openBtn.addEventListener("click", async () => {
+      const localPart = address.split("@")[0] || "";
+      localPartInputEl.value = localPart;
+      updatePreview();
+      await activateCurrentInput();
+    });
+
+    removeBtn.addEventListener("click", () => {
+      removeAlias(address);
+    });
 
     aliasListEl.appendChild(fragment);
   });
@@ -512,32 +504,6 @@ function bindEvents() {
   document.querySelector("#refreshBtn").addEventListener("click", () => loadMessages(true));
   document.querySelector("#copyAddressBtn").addEventListener("click", copyCurrentAddress);
   document.querySelector("#clearAliasBtn").addEventListener("click", clearCurrentAddress);
-
-  aliasListEl.addEventListener("click", async (event) => {
-    const item = event.target.closest(".alias-item");
-    if (!item) {
-      return;
-    }
-
-    const address = item.dataset.address || "";
-    if (!address) {
-      return;
-    }
-
-    if (event.target.closest(".alias-remove-btn")) {
-      event.preventDefault();
-      event.stopPropagation();
-      removeAlias(address);
-      return;
-    }
-
-    if (event.target.closest(".alias-open-btn") || !event.target.closest("button")) {
-      const localPart = address.split("@")[0] || "";
-      localPartInputEl.value = localPart;
-      updatePreview();
-      await activateCurrentInput();
-    }
-  });
 
   localPartInputEl.addEventListener("input", () => {
     const sanitized = sanitizeLocalPart(localPartInputEl.value);

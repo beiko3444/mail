@@ -4,148 +4,70 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Free Mail Forge</title>
-    <meta
-      name="description"
-      content="@inbox.xtracker.co.kr 로 실제 수신되는 메일을 확인하는 웹 앱"
-    />
+    <meta name="description" content="@inbox.xtracker.co.kr 수신 메일 확인 앱" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="noise"></div>
-    <main class="shell">
-      <section class="hero panel">
-        <div class="hero-copy">
-          <p class="eyebrow">Custom Domain Inbox</p>
-          <h1>xtracker 도메인으로 직접 받는 메일함.</h1>
-          <p class="hero-text">
-            <code>@inbox.xtracker.co.kr</code> 주소를 자유롭게 만들고, Resend 수신 API 또는 웹훅 캐시를 통해
-            실제 도착한 메일을 이 화면에서 바로 확인합니다.
-          </p>
-          <div class="stats">
-            <article>
-              <strong id="modeLabel">-</strong>
-              <span>연결 모드</span>
-            </article>
-            <article>
-              <strong id="messageCount">0</strong>
-              <span>받은 메일</span>
-            </article>
-            <article>
-              <strong id="aliasCount">0</strong>
-              <span>저장한 주소</span>
-            </article>
-          </div>
-        </div>
+    <main class="app">
+      <header class="top">
+        <h1>메일 확인</h1>
+        <p>@inbox.xtracker.co.kr 주소를 만들고 메일을 확인하세요.</p>
+      </header>
 
-        <div class="hero-card">
-          <div class="mail-window">
-            <div class="mail-window__bar">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <div class="mail-window__body">
-              <p class="label">현재 보고 있는 주소</p>
-              <h2 id="currentInbox">주소를 설정해보세요</h2>
-              <div class="inbox-meta">
-                <span id="connectionBadge" class="status-badge is-idle">준비 중</span>
-                <span id="inboxHint">Resend 설정이 끝났으면 원하는 local-part를 입력해 메일을 받아보세요.</span>
-              </div>
-              <div class="mail-actions">
-                <button id="activateInboxBtn" class="primary-btn">이 주소 보기</button>
-                <button id="randomAliasBtn" class="ghost-btn">랜덤 주소</button>
-                <button id="refreshBtn" class="ghost-btn">새로고침</button>
-                <button id="copyAddressBtn" class="ghost-btn">주소 복사</button>
-              </div>
-              <p class="helper" id="statusText">백엔드 구성을 확인하는 중입니다.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section class="card">
+        <h2>주소 설정</h2>
+        <label class="field">
+          <span>local-part</span>
+          <input id="localPartInput" type="text" placeholder="예: hello, support" maxlength="32" />
+        </label>
 
-      <section class="workspace grid-2">
-        <article class="panel controls-panel">
-          <div class="panel-head">
-            <p class="eyebrow">Inbox Setup</p>
-            <h3>받을 주소 정하기</h3>
-          </div>
-
-          <label class="field">
-            <span>local-part</span>
-            <input id="localPartInput" type="text" placeholder="예: hello, support, test" maxlength="32" />
-            <small>아래 주소로 메일이 도착하면 이 화면에서 확인할 수 있습니다.</small>
-          </label>
-
-          <div class="address-preview">
-            <span id="previewLocal">your-alias</span>
-            <strong id="previewDomain">@inbox.xtracker.co.kr</strong>
-          </div>
-
-          <div class="stack-actions">
-            <button id="applyAliasBtn" class="secondary-btn">주소 적용</button>
-            <button id="clearAliasBtn" class="ghost-btn danger-btn">현재 주소 지우기</button>
-          </div>
-
-          <div class="note-card">
-            <strong>사용 안내</strong>
-            <p>
-              Resend는 이 도메인으로 들어오는 모든 주소를 받을 수 있습니다. 예를 들어
-              <code>hello@inbox.xtracker.co.kr</code> 와 <code>support@inbox.xtracker.co.kr</code> 를
-              따로 골라서 볼 수 있습니다.
-            </p>
-          </div>
-        </article>
-
-        <article class="panel session-panel">
-          <div class="panel-head">
-            <p class="eyebrow">Backend</p>
-            <h3>현재 서버 상태</h3>
-          </div>
-
-          <div id="sessionCard" class="session-card empty-state">
-            서버 설정을 불러오는 중입니다.
-          </div>
-
-          <div class="saved-aliases">
-            <div class="panel-head sub-head">
-              <p class="eyebrow">Saved Aliases</p>
-              <h3>계속 볼 주소 목록</h3>
-            </div>
-            <div id="aliasList" class="mail-list empty-state">
-              저장한 주소가 아직 없습니다.
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section class="workspace grid-2 lower-grid">
-        <article class="panel list-panel">
-          <div class="panel-head">
-            <p class="eyebrow">Inbox</p>
-            <h3>받은 메일 목록</h3>
-          </div>
-          <div id="messageList" class="mail-list empty-state">
-            주소를 적용하면 이곳에 해당 주소로 온 메일이 표시됩니다.
-          </div>
-        </article>
-
-        <article class="panel detail-panel">
-          <div class="panel-head">
-            <p class="eyebrow">Viewer</p>
-            <h3>메일 상세 보기</h3>
-          </div>
-          <div id="messageDetail" class="detail-card empty-state">
-            메일을 클릭하면 발신자, 제목, 본문, 첨부파일이 여기에서 보입니다.
-          </div>
-        </article>
-      </section>
-
-      <section class="panel footer-note">
-        <p>
-          이 앱은 Resend의 <a href="https://resend.com/docs/dashboard/receiving/introduction" target="_blank" rel="noreferrer">Receiving Emails</a>
-          와 <a href="https://resend.com/docs/api-reference/emails/list-received-emails" target="_blank" rel="noreferrer">Received Emails API</a>
-          를 사용합니다. 공개 웹훅을 연결하면 <code>/api/webhooks/resend</code> 도 함께 사용할 수 있습니다.
+        <p class="preview">
+          <strong id="previewLocal">your-alias</strong><span id="previewDomain">@inbox.xtracker.co.kr</span>
         </p>
+
+        <div class="actions">
+          <button id="activateInboxBtn" type="button">주소 열기</button>
+          <button id="randomAliasBtn" type="button">랜덤</button>
+          <button id="refreshBtn" type="button">새로고침</button>
+        </div>
+        <div class="actions subtle-actions">
+          <button id="copyAddressBtn" type="button">주소 복사</button>
+          <button id="clearAliasBtn" type="button">현재 주소 해제</button>
+          <button id="applyAliasBtn" type="button" class="hidden-helper">주소 적용</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>현재 주소</h2>
+        <p id="currentInbox" class="current-address">주소를 설정해보세요</p>
+        <div class="status-line">
+          <span id="connectionBadge" class="status-badge">준비 중</span>
+          <span id="inboxHint">원하는 local-part를 입력해 주소를 적용하세요.</span>
+        </div>
+        <p id="statusText" class="status-text">앱을 초기화하는 중입니다.</p>
+        <div class="stats-inline">
+          <span>상태 <strong id="modeLabel">-</strong></span>
+          <span>메일 <strong id="messageCount">0</strong></span>
+          <span>저장 주소 <strong id="aliasCount">0</strong></span>
+        </div>
+        <p id="sessionCard" class="session-card">설정 확인 중</p>
+      </section>
+
+      <section class="card">
+        <h2>계속 볼 주소 목록</h2>
+        <div id="aliasList" class="empty">저장한 주소가 아직 없습니다.</div>
+      </section>
+
+      <section class="split">
+        <article class="card">
+          <h2>받은 메일 목록</h2>
+          <div id="messageList" class="empty">주소를 적용하면 해당 주소로 온 메일이 표시됩니다.</div>
+        </article>
+
+        <article class="card">
+          <h2>메일 상세</h2>
+          <div id="messageDetail" class="empty">메일을 클릭하면 내용이 표시됩니다.</div>
+        </article>
       </section>
     </main>
 
@@ -167,8 +89,8 @@
           <span class="alias-item__meta"></span>
         </div>
         <div class="alias-item__actions">
-          <button type="button" class="tiny-btn alias-open-btn">열기</button>
-          <button type="button" class="tiny-btn alias-remove-btn">삭제</button>
+          <button type="button" class="alias-open-btn">열기</button>
+          <button type="button" class="alias-remove-btn">삭제</button>
         </div>
       </article>
     </template>
