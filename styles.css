@@ -247,12 +247,17 @@ button:hover,
   justify-content: space-between;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
 }
 
 .alias-item.is-active,
 .message-item.is-active {
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+.alias-item:hover {
+  border-color: #cbd5e1;
 }
 
 .alias-item__address {
@@ -269,6 +274,7 @@ button:hover,
 .alias-item__actions {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .alias-remove-btn {

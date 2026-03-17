@@ -29,8 +29,8 @@
       <section class="card">
         <h2>주소 설정</h2>
         <label class="field">
-          <span>local-part</span>
-          <input id="localPartInput" type="text" placeholder="예: hello, support" maxlength="32" />
+          <span>메일명</span>
+          <input id="localPartInput" type="text" placeholder="예: minako, support" maxlength="32" />
         </label>
 
         <p class="preview">
@@ -38,14 +38,7 @@
         </p>
 
         <div class="actions">
-          <button id="activateInboxBtn" type="button">주소 열기</button>
-          <button id="randomAliasBtn" type="button">랜덤</button>
-          <button id="refreshBtn" type="button">새로고침</button>
-        </div>
-        <div class="actions subtle-actions">
-          <button id="copyAddressBtn" type="button">주소 복사</button>
-          <button id="clearAliasBtn" type="button">현재 주소 해제</button>
-          <button id="applyAliasBtn" type="button" class="hidden-helper">주소 적용</button>
+          <button id="activateInboxBtn" type="button">주소 저장</button>
         </div>
       </section>
 
@@ -54,7 +47,7 @@
         <p id="currentInbox" class="current-address">주소를 설정해보세요</p>
         <div class="status-line">
           <span id="connectionBadge" class="status-badge">준비 중</span>
-          <span id="inboxHint">원하는 local-part를 입력해 주소를 적용하세요.</span>
+          <span id="inboxHint">원하는 메일명을 입력해 주소를 저장하세요.</span>
         </div>
         <p id="statusText" class="status-text">앱을 초기화하는 중입니다.</p>
         <div class="stats-inline">
@@ -89,7 +82,6 @@
           <span class="alias-item__meta"></span>
         </div>
         <div class="alias-item__actions">
-          <button type="button" class="alias-open-btn">열기</button>
           <button type="button" class="alias-remove-btn">삭제</button>
         </div>
       </article>

@@ -3,9 +3,6 @@ const STORAGE_KEYS = {
   activeLocalPart: "xtracker-active-local-part",
 };
 
-const WORDS_A = ["alpha", "beacon", "core", "delta", "lumen", "signal", "orbit", "echo"];
-const WORDS_B = ["desk", "mail", "team", "spot", "flow", "note", "pilot", "lane"];
-
 const state = {
   config: null,
   activeAddress: "",
@@ -41,15 +38,6 @@ function sanitizeLocalPart(value) {
     .replace(/-{2,}/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 32);
-}
-
-function pick(list) {
-  return list[Math.floor(Math.random() * list.length)];
-}
-
-function createRandomLocalPart() {
-  const number = Math.floor(Math.random() * 900 + 100);
-  return `${pick(WORDS_A)}-${pick(WORDS_B)}-${number}`;
 }
 
 function getInboxDomain() {
@@ -135,7 +123,7 @@ function renderStats() {
 function renderCurrentInbox() {
   if (!state.activeAddress) {
     currentInboxEl.textContent = "주소를 설정해보세요";
-    inboxHintEl.textContent = "local-part를 입력하고 주소를 열면 메일이 수신됩니다.";
+    inboxHintEl.textContent = "메일명을 입력하고 주소를 저장하면 메일이 수신됩니다.";
     return;
   }
 
@@ -176,7 +164,6 @@ function renderAliases() {
     const item = fragment.querySelector(".alias-item");
     const addressEl = fragment.querySelector(".alias-item__address");
     const metaEl = fragment.querySelector(".alias-item__meta");
-    const openBtn = fragment.querySelector(".alias-open-btn");
     const removeBtn = fragment.querySelector(".alias-remove-btn");
 
     addressEl.textContent = address;
@@ -186,14 +173,20 @@ function renderAliases() {
       item.classList.add("is-active");
     }
 
-    openBtn.addEventListener("click", async () => {
+    item.addEventListener("click", async () => {
       const localPart = address.split("@")[0] || "";
       localPartInputEl.value = localPart;
       updatePreview();
       await activateCurrentInput();
     });
 
-    removeBtn.addEventListener("click", async () => {
+    removeBtn.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const confirmed = window.confirm("삭제하시겠습니까?");
+      if (!confirmed) {
+        return;
+      }
+
       try {
         await removeAlias(address);
       } catch (error) {
@@ -389,7 +382,7 @@ async function removeAlias(address) {
 function setActiveAddress(localPart) {
   const sanitized = sanitizeLocalPart(localPart);
   if (!sanitized) {
-    setStatus("local-part 를 먼저 입력해주세요.", "error");
+    setStatus("메일명을 먼저 입력해주세요.", "error");
     return false;
   }
 
@@ -474,36 +467,6 @@ function stopPolling() {
   }
 }
 
-async function copyCurrentAddress() {
-  if (!state.activeAddress) {
-    setStatus("먼저 주소를 적용해주세요.", "error");
-    return;
-  }
-
-  try {
-    await navigator.clipboard.writeText(state.activeAddress);
-    setStatus("현재 주소를 복사했습니다.", "connected");
-  } catch {
-    setStatus("클립보드 복사에 실패했습니다. 로컬 서버에서 다시 시도해주세요.", "error");
-  }
-}
-
-function clearCurrentAddress() {
-  stopPolling();
-  state.activeAddress = "";
-  state.messages = [];
-  state.activeMessage = null;
-  state.activeMessageId = "";
-  localStorage.removeItem(STORAGE_KEYS.activeLocalPart);
-  renderCurrentInbox();
-  renderSessionCard();
-  renderAliases();
-  renderMessages();
-  renderMessageDetail();
-  renderStats();
-  setStatus("현재 주소 선택만 해제했습니다. 저장 목록은 유지됩니다.", "idle");
-}
-
 async function activateCurrentInput() {
   if (!setActiveAddress(localPartInputEl.value)) {
     return;
@@ -522,15 +485,6 @@ async function activateCurrentInput() {
 
 function bindEvents() {
   document.querySelector("#activateInboxBtn").addEventListener("click", activateCurrentInput);
-  document.querySelector("#applyAliasBtn").addEventListener("click", activateCurrentInput);
-  document.querySelector("#randomAliasBtn").addEventListener("click", async () => {
-    localPartInputEl.value = createRandomLocalPart();
-    updatePreview();
-    await activateCurrentInput();
-  });
-  document.querySelector("#refreshBtn").addEventListener("click", () => loadMessages(true));
-  document.querySelector("#copyAddressBtn").addEventListener("click", copyCurrentAddress);
-  document.querySelector("#clearAliasBtn").addEventListener("click", clearCurrentAddress);
 
   localPartInputEl.addEventListener("input", () => {
     const sanitized = sanitizeLocalPart(localPartInputEl.value);
@@ -540,8 +494,9 @@ function bindEvents() {
     updatePreview();
   });
 
-  document.addEventListener("keydown", (event) => {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "enter") {
+  localPartInputEl.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
       activateCurrentInput();
     }
   });
@@ -573,7 +528,7 @@ async function init() {
     }
 
     const savedLocalPart = sanitizeLocalPart(localStorage.getItem(STORAGE_KEYS.activeLocalPart) || "");
-    localPartInputEl.value = savedLocalPart || createRandomLocalPart();
+    localPartInputEl.value = savedLocalPart || "";
     updatePreview();
     if (savedLocalPart) {
       setActiveAddress(savedLocalPart);
@@ -586,7 +541,7 @@ async function init() {
       startPolling();
     } else {
       if (!aliasLoadError) {
-        setStatus("원하는 local-part를 입력하거나 랜덤 주소를 눌러 시작하세요.", "idle");
+        setStatus("원하는 메일명을 입력하고 주소 저장을 누르세요.", "idle");
       }
     }
 
