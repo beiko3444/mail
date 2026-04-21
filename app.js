@@ -82,6 +82,43 @@ async function requestJson(url, options = {}) {
   return payload;
 }
 
+function looksLikeMixedCode(value) {
+  return /[a-z]/i.test(value) && /\d/.test(value);
+}
+
+function extractVerificationCode(message) {
+  const subject = String(message?.subject || "");
+  const intro = String(message?.intro || "");
+  const source = `${subject}\n${intro}`;
+
+  const keywordPattern =
+    /(?:인증\s*코드|인증번호|코드|otp|verification(?:\s*code)?|one[-\s]*time(?:\s*password)?|passcode)\D{0,12}([a-z0-9-]{4,12})/i;
+  const keywordMatch = source.match(keywordPattern);
+  if (keywordMatch?.[1]) {
+    return keywordMatch[1].replace(/[^a-z0-9]/gi, "").toUpperCase();
+  }
+
+  const sixDigitMatch = source.match(/\b\d{6}\b/);
+  if (sixDigitMatch?.[0]) {
+    return sixDigitMatch[0];
+  }
+
+  const numericMatch = source.match(/\b\d{4,8}\b/);
+  if (numericMatch?.[0]) {
+    return numericMatch[0];
+  }
+
+  const mixedMatch = source.match(/\b[a-z0-9]{6,10}\b/gi);
+  if (Array.isArray(mixedMatch)) {
+    const candidate = mixedMatch.find((item) => looksLikeMixedCode(item));
+    if (candidate) {
+      return candidate.toUpperCase();
+    }
+  }
+
+  return "";
+}
+
 function setStatus(message, tone = "idle") {
   statusTextEl.textContent = message;
   connectionBadgeEl.className = `status-badge is-${tone}`;
@@ -221,8 +258,15 @@ function renderMessages() {
     const timeEl = fragment.querySelector(".message-item__time");
     const fromEl = fragment.querySelector(".message-item__from");
     const introEl = fragment.querySelector(".message-item__intro");
+    const code = extractVerificationCode(message);
 
     subjectEl.textContent = message.subject || "(제목 없음)";
+    if (code) {
+      const codeBadge = document.createElement("span");
+      codeBadge.className = "message-item__code";
+      codeBadge.textContent = code;
+      subjectEl.append(" ", codeBadge);
+    }
     timeEl.textContent = formatDate(message.createdAt);
     fromEl.textContent = `보낸 사람: ${message.from || "알 수 없음"}`;
     introEl.textContent = message.intro || "미리보기가 없습니다.";
