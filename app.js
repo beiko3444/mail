@@ -174,7 +174,7 @@ function renderStats() {
 function renderCurrentInbox() {
   if (!state.activeAddress) {
     currentInboxEl.textContent = "주소를 설정해보세요";
-    inboxHintEl.textContent = "메일 이름을 입력하고 주소를 추가하면 메일을 수신합니다.";
+    inboxHintEl.textContent = "메일 이름을 입력하거나 저장된 주소를 선택하세요.";
     return;
   }
 
@@ -216,7 +216,7 @@ function renderAliases() {
     const removeBtn = fragment.querySelector(".alias-remove-btn");
 
     addressEl.textContent = address;
-    metaEl.textContent = address === state.activeAddress ? "현재 보는 주소" : "클릭해서 이 주소의 메일 보기";
+    metaEl.textContent = address === state.activeAddress ? "현재 선택됨" : "이 메일함 보기";
 
     if (address === state.activeAddress) {
       item.classList.add("is-active");
@@ -250,7 +250,7 @@ function renderAliases() {
 function renderMessages() {
   if (!state.activeAddress) {
     messageListEl.className = "mail-list empty-state";
-    messageListEl.textContent = "주소를 적용하면 해당 주소로 온 메일이 표시됩니다.";
+    messageListEl.textContent = "상단에서 메일함을 선택하면 해당 주소로 온 메일이 표시됩니다.";
     return;
   }
 
@@ -297,7 +297,7 @@ function renderVerificationCodes() {
 
   if (!state.activeAddress) {
     codeListEl.className = "code-list empty-state";
-    codeListEl.textContent = "주소를 선택하면 인증번호를 자동으로 찾습니다.";
+    codeListEl.textContent = "상단에서 메일함을 선택하면 인증번호를 자동으로 찾습니다.";
     return;
   }
 
@@ -672,7 +672,7 @@ async function init() {
       await loadMessages(false);
       startPolling();
     } else if (!aliasLoadError) {
-      setStatus("원하는 메일 이름을 입력하고 주소 추가를 누르세요.", "idle");
+      setStatus("원하는 메일 이름을 입력하거나 저장된 메일을 선택하세요.", "idle");
     }
 
     if (!aliasLoadError && state.config.sourceMode === "webhook-cache") {
