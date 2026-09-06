@@ -7,11 +7,28 @@ function getAddressList(payload, key) {
   const values = Array.isArray(payload?.[key]) ? payload[key] : payload?.[key] ? [payload[key]] : [];
   return values.map(value => String(value?.address || value?.email || value).trim().toLowerCase());
 }
+function decodeEntities(text) {
+  const named = { nbsp: ' ', lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' };
+  return text.replace(/&(#x[\da-f]+|#\d+|nbsp|lt|gt|quot|apos|amp);/gi, (whole, entity) => {
+    if (!entity.startsWith('#')) return named[entity.toLowerCase()];
+    const code = entity[1].toLowerCase() === 'x' ? parseInt(entity.slice(2),16) : Number(entity.slice(1));
+    return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : whole;
+  });
+}
 function plainText(html) {
-  return String(html || '').replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
-    .replace(/<(?:br|\/p|\/div|\/tr|\/h[1-6])\b[^>]*>/gi, '\n')
-    .replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  const text = String(html || '').replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+    .replace(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi, (whole, attributes, label) => {
+      const href = attributes.match(/(?:^|\s)href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+      if (!href) return label;
+      try {
+        const url = new URL(decodeEntities(href[1] ?? href[2] ?? href[3]));
+        if (!['http:', 'https:'].includes(url.protocol)) return label;
+        // Preserve the destination as text; never render or automatically visit it.
+        return label + '\n' + url.href.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') + '\n';
+      } catch { return label; }
+    })
+    .replace(/<(?:br|\/p|\/div|\/tr|\/h[1-6])\b[^>]*>/gi, '\n').replace(/<[^>]*>/g, '');
+  return decodeEntities(text);
 }
 function normalizeMessage(payload) {
   return { id: payload.id || payload.email_id, from: String(payload.from?.address || payload.from || ''),
@@ -50,9 +67,9 @@ function getPage(after) {
   pageCache.set(key, entry);
   return entry.promise;
 }
-async function listReceivedMessages(address, since = 0) {
+async function listReceivedMessages(address, since = 0, after = '') {
   const messages = [];
-  let after = '', partial = false;
+  let partial = false, nextAfter = '';
   const started = Date.now();
   for (let page = 0; page < 10; page++) {
     const payload = await getPage(after);
@@ -62,12 +79,14 @@ async function listReceivedMessages(address, since = 0) {
       if ([...message.to,...message.cc,...message.bcc].includes(address.toLowerCase()) && Date.parse(message.createdAt) >= since - 5000) messages.push(message);
     }
     const oldest = data.at(-1);
-    if (!payload?.has_more || !oldest || Date.parse(oldest.created_at) < since - 5000) { partial = false; break; }
+    if (!payload?.has_more || !oldest || Date.parse(oldest.created_at) < since - 5000) { partial = false; nextAfter = ''; break; }
+    if (typeof oldest.id !== 'string' || !/^[a-zA-Z0-9_-]{1,200}$/.test(oldest.id) || oldest.id === after) throw new Error('Invalid provider pagination');
     partial = true;
-    if (Date.now() - started > 6000 || oldest.id === after) break;
-    after = oldest.id;
+    nextAfter = oldest.id;
+    if (Date.now() - started > 6000) break;
+    after = nextAfter;
   }
-  return { messages: [...new Map(messages.map(m => [m.id,m])).values()].sort((a,b) => Date.parse(b.createdAt)-Date.parse(a.createdAt)), partial };
+  return { messages: [...new Map(messages.map(m => [m.id,m])).values()].sort((a,b) => Date.parse(b.createdAt)-Date.parse(a.createdAt)), partial, nextAfter };
 }
 async function getReceivedMessage(id) { return normalizeMessage(await resendRequest('/emails/receiving/' + encodeURIComponent(id))); }
 function messageTargetsAddress(message,address) { return [...message.to,...message.cc,...message.bcc].includes(address.toLowerCase()); }

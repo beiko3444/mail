@@ -19,9 +19,19 @@ const cmp=fs.existsSync(cmpFile)?fs.readFileSync(cmpFile,'utf8'):'';
 if (config.ads.approved && (!config.ads.consentReady || !cmp.trim() || !/^\d{10}$/.test(config.ads.slotId))) throw new Error('Before ads, install the actual certified CMP snippet, verify its messages and set a real manual ad slot.');
 const pages=require('../content/pages')(config,escape);
 const routes=[];
+function icon(name) {
+ const paths = {
+  mail:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/>',
+  inbox:'<path d="m4 4-2 10v6h20v-6L20 4Z"/><path d="M2 14h6l2 3h4l2-3h6"/>',
+  book:'<path d="M12 6c-3-3-8-3-10-1v15c3-2 7-2 10 0 3-2 7-2 10 0V5c-3-2-7-2-10 1Z"/><path d="M12 6v14"/>',
+  help:'<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4M12 16h.01"/>',
+  chat:'<path d="M21 12a9 9 0 0 1-9 9H3l1-5a9 9 0 1 1 17-4Z"/><path d="M8 11h8M8 15h5"/>'
+ };
+ return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">'+paths[name]+'</svg>';
+}
 function layout(title,description,body,route,type='page',extra='') {
   const ads=type==='guide' && canShowAds(route,config.ads);
-  const nav=[['/','임시메일'],['/guides/','이용 가이드'],['/faq/','자주 묻는 질문']];
+  const nav=[['/','받은편지함','inbox'],['/guides/','이용 가이드','book'],['/faq/','자주 묻는 질문','help']];
   const current=p=>p==='/'?route==='/':route.startsWith(p);
   return `<!doctype html>
 <html lang="ko">
@@ -31,7 +41,7 @@ function layout(title,description,body,route,type='page',extra='') {
 <title>${escape(title)} | ${escape(config.name)}</title>
 <meta name="description" content="${escape(description)}">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#142235">
+<meta name="theme-color" content="#245cdb">
 <link rel="canonical" href="${escape(config.origin+route)}">
 <meta property="og:type" content="${type==='guide'?'article':'website'}">
 <meta property="og:locale" content="ko_KR">
@@ -48,9 +58,11 @@ ${extra}
 </head>
 <body data-page-type="${type}">
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
-<header class="site-header"><div class="container header-inner"><a class="brand" href="/" aria-label="${escape(config.name)} 홈"><span class="brand-mark" aria-hidden="true">✉</span>${escape(config.name)}<small>무료 임시 이메일</small></a><nav class="site-nav" aria-label="주 메뉴">${nav.map(([p,n])=>`<a href="${p}"${current(p)?' aria-current="page"':''}>${n}</a>`).join('')}</nav></div></header>
+<header class="site-header"><div class="header-inner"><a class="brand" href="/" aria-label="${escape(config.name)} 홈"><span class="brand-mark">${icon('mail')}</span>${escape(config.name)}</a><p class="brand-description">가볍게 쓰는 하루의 메일</p><span class="nav-label">나의 메일</span><nav class="site-nav" aria-label="주 메뉴">${nav.map(([p,n,i])=>`<a href="${p}"${current(p)?' aria-current="page"':''}>${icon(i)}<span>${n}</span><span class="nav-dot" aria-hidden="true"></span></a>`).join('')}</nav><div class="sidebar-bottom"><a href="/contact/">${icon('chat')}문의 및 도움말</a><div class="sidebar-note"><strong>잠깐 필요할 때, 하루메일</strong><br>가입 없이 무료로 사용하세요.</div></div></div></header>
+<div class="site-body">
 ${body}
-<footer class="site-footer"><div class="container"><div class="footer-top"><a href="/" class="footer-brand">${escape(config.name)}</a><nav class="footer-links" aria-label="서비스 안내"><a href="/about/">서비스 소개</a><a href="/contact/">문의</a><a href="/privacy/">개인정보처리방침</a><a href="/terms/">이용약관</a></nav></div><p class="footer-bottom">© 2026 ${escape(config.name)} · 무료 수신 서비스 · 중요한 계정에는 계속 사용할 수 있는 이메일을 이용하세요.</p></div></footer>
+<footer class="site-footer"><div class="container"><div class="footer-top"><a href="/" class="footer-brand">${escape(config.name)}</a><nav class="footer-links" aria-label="서비스 안내"><a href="/about/">서비스 소개</a><a href="/contact/">문의</a><a href="/privacy/">개인정보처리방침</a><a href="/terms/">이용약관</a></nav></div><p class="footer-bottom">© 2026 ${escape(config.name)} · 필요한 순간, 가볍게 쓰는 무료 임시 이메일</p></div></footer>
+</div>
 ${ads?'<script src="/ads.js" defer></script>':''}
 </body></html>`;
 }

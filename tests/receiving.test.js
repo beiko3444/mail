@@ -47,3 +47,19 @@ test('a valid mailbox cannot open another mailbox message and no HTML is exposed
     assert.equal(own.statusCode,200); assert.equal(own.body.text,'123456'); assert.equal(own.body.html,undefined);
   } finally {global.fetch = original;}
 });
+
+test('HTML-only emails retain safe verification destinations as plain text', async () => {
+  const original = global.fetch;
+  const { mailbox, token } = issueMailbox();
+  try {
+    global.fetch = async () => response({ id:'html-link', to:[mailbox.address], created_at:new Date().toISOString(), text:null,
+      html:'<p>안녕하세요</p><a href="https://example.org/verify?token=abc&amp;source=email"><strong>이메일 인증하기</strong></a><a href="&#106;avascript:alert(1)">위험한 링크</a><script>evil()</script><img src="https://tracker.example.org/pixel">' });
+    const output = res();
+    await require('../api/messages/[id]')({ method:'GET', headers:{cookie:`xtmail_session=${token}`}, query:{id:'html-link'} }, output);
+    assert.equal(output.statusCode, 200);
+    assert.match(output.body.text, /https:\/\/example\.org\/verify\?token=abc&source=email/);
+    assert.match(output.body.text, /이메일 인증하기/);
+    assert.doesNotMatch(output.body.text, /javascript:|alert\(1\)|evil\(\)|tracker\.example/);
+    assert.equal(output.body.html, undefined);
+  } finally { global.fetch = original; }
+});

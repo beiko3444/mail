@@ -1,16 +1,46 @@
 <main id="main" class="container app-main">
-  <section class="mail-hero" aria-labelledby="mail-title">
-    <div class="hero-heading"><div><span class="eyebrow">무료 임시 이메일</span><h1 id="mail-title">잠깐 필요한 메일,<br>간편하게.</h1><p>가입 없이 만드는 무료 임시 이메일.</p></div><span class="free-label">항상 무료</span></div>
-    <div class="address-box"><label for="emailAddress">내 임시 이메일 주소</label><div class="address-line"><input id="emailAddress" readonly value="" placeholder="주소를 만들어 시작하세요" aria-describedby="statusText"><button id="copyBtn" class="copy-button" type="button" disabled>주소 복사</button></div></div>
-    <div class="mail-actions"><button id="createBtn" class="button button-lime" type="button" disabled>무료 주소 만들기 <span aria-hidden="true">↗</span></button><button id="refreshBtn" class="button button-outline" type="button" disabled><span aria-hidden="true">↻</span> 새로고침</button><button id="closeBtn" class="text-button" type="button" disabled>메일함 닫기</button><span id="expiryText" class="expiry">주소 발급 후 24시간 이용</span></div>
-    <p id="statusText" class="live-status" role="status" aria-live="polite">메일 서비스를 확인하고 있습니다.</p>
+  <div class="app-heading">
+    <div><p class="eyebrow">나의 작은 임시 우편함</p><h1>필요한 메일만, <span>하루메일.</span></h1><p class="heading-description">가입 없이 만들고, 필요한 만큼 가볍게 쓰세요.</p></div>
+    <a class="help-link" href="/guides/temporary-email-and-privacy/"><span aria-hidden="true">?</span> 처음 사용하시나요?</a>
+  </div>
+
+  <section id="mailboxCard" class="mailbox-card" data-has-mailbox="false" aria-labelledby="mail-title">
+    <div class="mailbox-top"><h2 id="mail-title"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>내 임시 이메일</h2><span class="free-label">무료 · 가입 불필요</span></div>
+    <div class="address-box">
+      <label class="sr-only" for="emailAddress">내 임시 이메일 주소</label>
+      <input id="emailAddress" readonly value="" placeholder="나만의 임시 주소를 만들어 보세요" aria-describedby="statusText expiryText" autocomplete="off" spellcheck="false">
+      <button id="copyBtn" class="button button-primary copy-button" type="button" disabled hidden><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M15 8V4H4v11h4"/></svg><span id="copyLabel">주소 복사</span></button>
+      <button id="createBtn" class="button button-primary create-button" type="button" disabled>무료 주소 만들기</button>
+    </div>
+    <div class="mailbox-bottom">
+      <div class="time-remaining"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="expiryText">발급한 순간부터 24시간 이용</span><progress id="expiryProgress" max="86400000" value="86400000" aria-label="메일함 남은 이용시간" hidden></progress></div>
+      <button id="closeBtn" class="text-button" type="button" disabled hidden>메일함 닫기</button>
+    </div>
+    <div class="service-status"><span id="statusDot" class="status-dot" data-state="loading" aria-hidden="true"></span><p id="statusText" role="status" aria-live="polite">메일 서비스를 확인하고 있어요.</p><button id="retryBtn" class="inline-action" type="button" hidden>다시 시도</button></div>
   </section>
-  <div class="mail-notice"><span class="notice-dot" aria-hidden="true"></span><p>이 브라우저에서만 메일함이 유지됩니다. 새 주소를 만들거나 쿠키를 지우면 기존 메일함을 다시 열 수 없습니다. <a href="/privacy/#retention">메일 보관 안내</a></p></div>
-  <section class="inbox-workspace" aria-label="메일 수신함">
-    <div class="inbox-list-panel"><div class="panel-heading"><h2>받은편지함</h2><span id="messageCount" class="count-badge">0</span></div><p class="auto-refresh">열어 둔 동안 20초마다 새 메일을 확인합니다.</p><div id="messageList" class="message-list"><div class="empty-state"><span class="empty-icon" aria-hidden="true">✉</span><h3>아직 메일이 없어요</h3><p>임시주소를 만든 뒤 필요한 곳에<br>입력하면 여기에 메일이 도착합니다.</p></div></div></div>
-    <div class="detail-panel"><div class="panel-heading"><h2>메일 내용</h2><span class="subtle-label">텍스트로 안전하게 보기</span></div><div id="messageDetail" class="message-detail"><div class="empty-state"><h3>메일을 선택해 주세요</h3><p>보낸 사람과 본문을 확인할 수 있어요.<br>외부 이미지와 스크립트는 불러오지 않습니다.</p></div></div></div>
+
+  <section id="inboxWorkspace" class="inbox-workspace" data-view="list" aria-label="받은편지함">
+    <div class="inbox-toolbar"><div class="inbox-title"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4-2 10v6h20v-6L20 4Z"/><path d="M2 14h6l2 3h4l2-3h6"/></svg><h2>받은편지함</h2><span id="messageCount" class="count-badge">0</span></div><button id="refreshBtn" class="button button-quiet" type="button" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 6a8 8 0 0 1 13 3M5 15a8 8 0 0 0 13 3"/></svg><span id="refreshLabel">새로고침</span></button></div>
+    <div class="inbox-layout">
+      <div id="listPanel" class="inbox-list-panel">
+        <div id="messageList" class="message-list"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">✉</span><h3>첫 메일을 받을 준비</h3><p>위에서 무료 주소를 만들면<br>도착한 메일을 여기서 확인할 수 있어요.</p><span class="empty-note">회원가입 없이, 몇 번의 클릭만으로</span></div></div>
+      </div>
+      <section id="detailPanel" class="detail-panel" aria-label="메일 내용" hidden>
+        <div class="detail-toolbar"><button id="backBtn" class="button button-quiet" type="button"><span aria-hidden="true">←</span> 목록으로</button><span class="subtle-label">텍스트로 보기</span></div>
+        <div id="messageDetail" class="message-detail" tabindex="-1"></div>
+      </section>
+    </div>
+    <div class="inbox-footer"><p id="syncText">주소를 만들면 새 메일을 자동으로 확인해요.</p><a href="/guides/missing-email-checklist/">메일이 오지 않나요? <span aria-hidden="true">↗</span></a></div>
   </section>
-  <section class="quick-help"><div><span class="eyebrow ink">이용 전 확인</span><h2>가볍게 쓰고,<br>중요한 계정은 따로.</h2></div><div class="quick-help-copy"><p>한 번 확인하고 끝나는 테스트 메일이나, 기본 메일 주소를 공유하고 싶지 않을 때 사용해 보세요. 금융·결제·비밀번호 복구처럼 오래 유지해야 하는 계정에는 일반 이메일을 사용해 주세요.</p><a class="inline-link" href="/guides/">임시메일 이용 가이드 <span aria-hidden="true">↗</span></a><a class="inline-link" href="/faq/">메일이 도착하지 않나요? <span aria-hidden="true">↗</span></a></div></section>
-  <dialog id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><h2 id="confirmTitle">새 주소를 만들까요?</h2><p id="confirmText">기존 메일함의 접근 정보가 이 브라우저에서 사라집니다. 수신 업체에 보관된 원본 메일까지 즉시 삭제되는 것은 아닙니다.</p><div class="dialog-actions"><button class="button button-light" value="cancel">취소</button><button id="confirmAction" class="button button-dark" value="confirm">계속</button></div></form></dialog>
+
+  <div class="privacy-note"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/></svg><p>이 브라우저에서 24시간 동안 이용해요. 새 주소를 만들거나 쿠키를 지우면 기존 메일함에 다시 접근할 수 없어요. <a href="/privacy/#retention">보관 안내</a></p></div>
+
+  <section class="how-it-works" aria-labelledby="how-title"><div class="section-heading"><h2 id="how-title">이렇게 사용하세요</h2><span>세 단계면 충분해요</span></div><ol class="steps"><li><span class="step-number">01</span><div><h3>주소 만들기</h3><p>가입 없이 임시 이메일을 발급받아요.</p></div></li><li><span class="step-number">02</span><div><h3>필요한 곳에 사용하기</h3><p>주소를 복사해 메일을 받을 곳에 입력해요.</p></div></li><li><span class="step-number">03</span><div><h3>도착한 메일 확인하기</h3><p>받은편지함에서 내용을 바로 확인해요.</p></div></li></ol></section>
+
+  <section class="home-guide"><div><span class="guide-tag">알아두면 좋아요</span><h2>가볍게 쓰는 메일에도,<br>알아둘 것들이 있어요.</h2><p>중요한 계정이나 비밀번호 복구에는<br>계속 관리할 수 있는 이메일을 사용해 주세요.</p></div><div class="guide-links"><a href="/guides/temporary-email-and-privacy/"><span>임시 이메일, 어떻게 동작하나요?</span><span aria-hidden="true">↗</span></a><a href="/guides/missing-email-checklist/"><span>기다리는 메일이 도착하지 않을 때</span><span aria-hidden="true">↗</span></a><a href="/faq/"><span>자주 묻는 질문 한 번에 보기</span><span aria-hidden="true">↗</span></a></div></section>
+
+  <dialog id="confirmDialog" aria-labelledby="confirmTitle" aria-describedby="confirmText"><form method="dialog"><span class="dialog-symbol" aria-hidden="true">↻</span><h2 id="confirmTitle">새 주소를 만들까요?</h2><p id="confirmText">기존 메일함의 접근 정보가 이 브라우저에서 사라집니다. 수신 업체에 보관된 원본 메일까지 즉시 삭제되는 것은 아닙니다.</p><div class="dialog-actions"><button class="button button-light" value="cancel" autofocus>유지할게요</button><button id="confirmAction" class="button button-primary" value="confirm">새 주소 만들기</button></div></form></dialog>
+  <dialog id="copyDialog" aria-labelledby="copyTitle"><form method="dialog"><h2 id="copyTitle">직접 복사해 주세요</h2><p>브라우저에서 자동 복사를 허용하지 않았어요. 아래 내용을 길게 누르거나 복사 단축키를 사용해 주세요.</p><label class="sr-only" for="manualCopyText">복사할 내용</label><input id="manualCopyText" readonly autocomplete="off" spellcheck="false"><div class="dialog-actions"><button class="button button-primary" value="close">확인</button></div></form></dialog>
+  <noscript><p class="no-script">메일 주소를 만들고 수신하려면 브라우저에서 JavaScript를 켜 주세요. <a href="/guides/">이용 가이드</a>는 지금도 읽을 수 있어요.</p></noscript>
 </main>
 <script src="/app.js" defer></script>

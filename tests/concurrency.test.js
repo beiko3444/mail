@@ -11,19 +11,20 @@ const mailbox = {
   createdAt: Date.now(), expiresAt: Date.now() + 86400000,
 };
 
-function appHarness() {
+function appHarness({ clipboardFails = false, clipboardWrite } = {}) {
   const nodes = new Map(), documentEvents = new Map(), timers = new Map();
   const requests = [];
   let timerId = 0;
   function element() {
     const events = new Map();
     return {
-      textContent: '', value: '', disabled: false, children: [], open: false,
+      textContent: '', value: '', disabled: false, children: [], open: false, hidden: false, dataset: {}, attributes: {},
       classList: { toggle() {} },
       replaceChildren(...children) { this.children = children; },
       append(...children) { this.children.push(...children); },
       insertBefore(child, before) { this.children.splice(this.children.indexOf(before), 0, child); },
-      setAttribute() {}, focus() {}, select() {},
+      setAttribute(name, value) { this.attributes[name] = String(value); },
+      focus() { document.activeElement = this; }, select() { this.selectedText = true; },
       addEventListener(name, callback, options = {}) {
         if (!events.has(name)) events.set(name, []);
         events.get(name).push({ callback, once: options.once });
@@ -46,7 +47,7 @@ function appHarness() {
   };
   for (const id of ['createBtn', 'copyBtn', 'refreshBtn', 'closeBtn']) document.getElementById(id).disabled = true;
   const context = {
-    document, navigator: {}, Intl, Date, AbortSignal: { timeout: () => null },
+    document, navigator: { clipboard: { async writeText(value) { if (clipboardWrite) return clipboardWrite(value); if (clipboardFails) throw new Error('Denied'); context.copied = value; } } }, Intl, Date, AbortSignal: { timeout: () => null },
     setTimeout(callback) { timers.set(++timerId, callback); return timerId; },
     clearTimeout(id) { timers.delete(id); }, setInterval() {},
     fetch(url, options) {
@@ -55,7 +56,7 @@ function appHarness() {
   };
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'), context);
   return {
-    nodes, requests, timers,
+    nodes, requests, timers, document,
     take(url, method = 'GET') {
       const index = requests.findIndex(request => request.url === url && request.method === method);
       assert.notEqual(index, -1, `Expected ${method} ${url}`);
@@ -88,6 +89,141 @@ test('initial mailbox restoration completes before address creation becomes avai
   assert.equal(app.requests.filter(request => request.method === 'POST').length, 0);
   await app.reply(app.take('/api/mailbox'), { mailbox: null });
   assert.equal(app.nodes.get('createBtn').disabled, false);
+});
+
+test('configuration failure can be retried without reloading the page', async () => {
+  const app = appHarness();
+  await app.reply(app.take('/api/config'), { error: 'Temporary outage' }, 503);
+  assert.equal(app.nodes.get('retryBtn')?.hidden, false);
+  app.click('retryBtn');
+  await app.reply(app.take('/api/config'), { apiConfigured: true });
+  await app.reply(app.take('/api/mailbox'), { mailbox: null });
+  assert.equal(app.nodes.get('createBtn').disabled, false);
+  assert.equal(app.nodes.get('retryBtn').hidden, true);
+});
+
+test('denied verification-code copy offers the code itself for manual copying', async () => {
+  const app = appHarness({ clipboardFails: true }); await app.boot(mailbox);
+  app.click('refreshBtn');
+  const message = { id: 'otp', from: 'sender@example.org', subject: '인증', createdAt: new Date().toISOString() };
+  await app.reply(app.take('/api/messages'), { address: mailbox.address, messages: [message] });
+  app.nodes.get('messageList').children[0].fire('click');
+  await app.reply(app.take('/api/messages/otp'), { ...message, address: mailbox.address, text: '인증번호 123456' });
+  const copy = app.nodes.get('messageDetail').children.find(node => node.className === 'code-copy');
+  assert.ok(copy); copy.fire('click'); await flush();
+  assert.equal(app.nodes.get('copyDialog')?.open, true);
+  assert.equal(app.nodes.get('manualCopyText')?.value, '123456');
+  assert.equal(app.nodes.get('manualCopyText')?.selectedText, true);
+});
+
+test('returning from a message restores list view and its keyboard focus', async () => {
+  const app = appHarness(); await app.boot(mailbox); app.click('refreshBtn');
+  const message = { id: 'a', from: 'sender@example.org', subject: 'Hello', createdAt: new Date().toISOString() };
+  await app.reply(app.take('/api/messages'), { address: mailbox.address, messages: [message] });
+  app.nodes.get('messageList').children[0].fire('click');
+  await app.reply(app.take('/api/messages/a'), { ...message, address: mailbox.address, text: 'Hello' });
+  assert.equal(app.nodes.get('inboxWorkspace')?.dataset.view, 'detail');
+  app.click('backBtn');
+  assert.equal(app.nodes.get('inboxWorkspace')?.dataset.view, 'list');
+  assert.equal(app.document.activeElement, app.nodes.get('messageList').children[0]);
+});
+
+test('unchanged automatic inbox refresh preserves the focused message button', async () => {
+  const app = appHarness(); await app.boot(mailbox); app.click('refreshBtn');
+  const payload = { address: mailbox.address, messages: [{ id: 'a', from: 'sender@example.org', subject: 'Hello', createdAt: new Date().toISOString() }] };
+  await app.reply(app.take('/api/messages'), payload);
+  const focused = app.nodes.get('messageList').children[0]; focused.focus();
+  app.firePoll(); await app.reply(app.take('/api/messages'), payload);
+  assert.equal(app.nodes.get('messageList').children[0], focused);
+  assert.equal(app.document.activeElement, focused);
+});
+
+test('failed restoration retains a scheduled recovery attempt', async () => {
+  const app = appHarness(); await app.boot(mailbox);
+  app.focus(); await app.reply(app.take('/api/mailbox'), { error: 'Unavailable' }, 503);
+  assert.equal(app.timers.size, 1);
+  app.firePoll();
+  await app.reply(app.take('/api/mailbox'), { mailbox });
+  await app.reply(app.take('/api/messages'), { address: mailbox.address, messages: [] });
+  assert.equal(app.nodes.get('createBtn').disabled, false);
+});
+
+test('same-mailbox restoration restarts a detail request invalidated by visibility change', async () => {
+  const app = appHarness(); await app.boot(mailbox); app.click('refreshBtn');
+  const message = { id: 'a', from: 'sender@example.org', subject: 'Hello', createdAt: new Date().toISOString() };
+  await app.reply(app.take('/api/messages'), { address: mailbox.address, messages: [message] });
+  app.nodes.get('messageList').children[0].fire('click'); const stale = app.take('/api/messages/a');
+  app.focus(); await app.reply(app.take('/api/mailbox'), { mailbox });
+  await app.reply(app.take('/api/messages'), { address: mailbox.address, messages: [message] });
+  await app.reply(app.take('/api/messages/a'), { ...message, address: mailbox.address, text: 'Current body' });
+  await app.reply(stale, { ...message, address: mailbox.address, text: 'Old body' });
+  assert.equal(app.nodes.get('messageDetail').children.at(-1).textContent, 'Current body');
+  assert.equal(app.nodes.get('messageDetail').attributes['aria-busy'], 'false');
+});
+
+test('a stale detail finishing before restoration cannot strand its loading view', async () => {
+  const app = appHarness(); await app.boot(mailbox); app.click('refreshBtn');
+  const message = { id:'a', from:'sender@example.org', subject:'Hello', createdAt:new Date().toISOString() };
+  await app.reply(app.take('/api/messages'),{address:mailbox.address,messages:[message]});
+  app.nodes.get('messageList').children[0].fire('click'); const stale=app.take('/api/messages/a');
+  app.focus(); const restore=app.take('/api/mailbox');
+  await app.reply(stale,{...message,address:mailbox.address,text:'Stale'});
+  await app.reply(restore,{mailbox});
+  await app.reply(app.take('/api/messages'),{address:mailbox.address,messages:[message]});
+  await app.reply(app.take('/api/messages/a'),{...message,address:mailbox.address,text:'Current'});
+  assert.equal(app.nodes.get('messageDetail').children.at(-1).textContent,'Current');
+});
+
+test('cancelling mailbox replacement resumes a detail request it interrupted', async () => {
+  const app = appHarness(); await app.boot(mailbox); app.click('refreshBtn');
+  const message = { id:'a', from:'sender@example.org', subject:'Hello', createdAt:new Date().toISOString() };
+  await app.reply(app.take('/api/messages'),{address:mailbox.address,messages:[message]});
+  app.nodes.get('messageList').children[0].fire('click'); const stale=app.take('/api/messages/a');
+  app.click('createBtn'); await app.reply(stale,{...message,address:mailbox.address,text:'Stale'});
+  app.nodes.get('confirmDialog').close('cancel'); await flush();
+  await app.reply(app.take('/api/messages'),{address:mailbox.address,messages:[message]});
+  await app.reply(app.take('/api/messages/a'),{...message,address:mailbox.address,text:'Current'});
+  assert.equal(app.nodes.get('messageDetail').children.at(-1).textContent,'Current');
+});
+
+test('expired session clears and closes manual-copy content', async () => {
+  const app = appHarness({ clipboardFails: true }); await app.boot(mailbox);
+  app.click('copyBtn'); await flush();
+  assert.equal(app.nodes.get('copyDialog').open, true);
+  app.click('refreshBtn'); await app.reply(app.take('/api/messages'), { error: 'Expired' }, 401);
+  assert.equal(app.nodes.get('copyDialog').open, false);
+  assert.equal(app.nodes.get('manualCopyText').value, '');
+});
+
+test('late clipboard failure cannot reveal an expired mailbox', async () => {
+  let rejectCopy;
+  const app = appHarness({ clipboardWrite: () => new Promise((resolve, reject) => { rejectCopy = reject; }) }); await app.boot(mailbox);
+  app.click('copyBtn');
+  app.click('refreshBtn'); await app.reply(app.take('/api/messages'), { error: 'Expired' }, 401);
+  rejectCopy(new Error('Permission denied')); await flush();
+  assert.equal(app.nodes.get('copyDialog').open, false);
+  assert.equal(app.nodes.get('manualCopyText').value, '');
+});
+
+test('initial restoration failure never enables replacing an unknown existing session', async () => {
+  const app = appHarness();
+  await app.reply(app.take('/api/config'), { apiConfigured: true });
+  await app.reply(app.take('/api/mailbox'), { error: 'Unavailable' }, 503);
+  assert.equal(app.nodes.get('createBtn').disabled, true);
+  app.click('createBtn');
+  assert.equal(app.requests.filter(request => request.method === 'POST').length, 0);
+});
+
+test('partial inbox scans continue and retain previously found messages', async () => {
+  const app=appHarness(); await app.boot(mailbox); app.click('refreshBtn');
+  const message = id => ({id,from:'sender@example.org',subject:id,createdAt:new Date().toISOString()});
+  await app.reply(app.take('/api/messages'), {address:mailbox.address,messages:[message('new')],partial:true,nextCursor:'signed-scan'});
+  app.click('refreshBtn');
+  await app.reply(app.take('/api/messages?cursor=signed-scan'), {address:mailbox.address,messages:[message('older')],partial:false,nextCursor:null});
+  assert.equal(app.nodes.get('messageCount').textContent,'2');
+  app.firePoll();
+  await app.reply(app.take('/api/messages'), {address:mailbox.address,messages:[message('new')],partial:true,nextCursor:'next-scan'});
+  assert.equal(app.nodes.get('messageCount').textContent,'2');
 });
 
 test('stale mailbox restoration cannot erase a successfully issued address', async () => {

@@ -33,6 +33,24 @@ function requireMailbox(req) {
   if (!cookie) throw failure('주소를 먼저 만들어 주세요.');
   return verifyToken(cookie.slice(COOKIE.length + 1));
 }
+function issueScanCursor(after, mailbox) {
+  if (!/^[a-zA-Z0-9_-]{1,200}$/.test(after)) throw failure('수신 목록을 이어서 확인하지 못했습니다.', 503);
+  const payload = Buffer.from(JSON.stringify({ after, address:mailbox.address, createdAt:mailbox.createdAt, expiresAt:mailbox.expiresAt })).toString('base64url');
+  return payload + '.' + signature('cursor:' + payload).toString('base64url');
+}
+function verifyScanCursor(token, mailbox) {
+  if (token === undefined || token === '') return '';
+  const invalid = () => failure('수신 목록의 조회 정보가 유효하지 않습니다. 다시 확인해 주세요.', 400);
+  if (typeof token !== 'string' || token.length > 2048) throw invalid();
+  const parts = token.split('.');
+  if (parts.length !== 2 || !parts.every(p => /^[A-Za-z0-9_-]+$/.test(p))) throw invalid();
+  const expected = signature('cursor:' + parts[0]), actual = Buffer.from(parts[1], 'base64url');
+  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw invalid();
+  let cursor;
+  try { cursor = JSON.parse(Buffer.from(parts[0], 'base64url').toString()); } catch { throw invalid(); }
+  if (!cursor || cursor.address !== mailbox.address || cursor.createdAt !== mailbox.createdAt || cursor.expiresAt !== mailbox.expiresAt || cursor.expiresAt <= Date.now() || !/^[a-zA-Z0-9_-]{1,200}$/.test(cursor.after)) throw invalid();
+  return cursor.after;
+}
 function checkOrigin(req) {
   if (req.headers?.['sec-fetch-site'] === 'cross-site') throw failure('다른 사이트에서 보낸 요청은 허용되지 않습니다.', 403);
   if (req.headers?.origin) {
@@ -62,4 +80,4 @@ function belongsToMailbox(message, mailbox) {
   const time = Date.parse(message.createdAt);
   return [...(message.to || []), ...(message.cc || []), ...(message.bcc || [])].some(value => value.toLowerCase() === mailbox.address) && Number.isFinite(time) && time >= mailbox.createdAt - 5000 && time < mailbox.expiresAt;
 }
-module.exports = { issueMailbox, verifyToken, requireMailbox, setCookie, checkOrigin, limitCreation, belongsToMailbox, failure };
+module.exports = { issueMailbox, verifyToken, requireMailbox, setCookie, checkOrigin, limitCreation, belongsToMailbox, failure, issueScanCursor, verifyScanCursor };
