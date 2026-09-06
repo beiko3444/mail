@@ -21,7 +21,8 @@ test('public SEO metadata, structured data, discovery and anchors agree',()=>{
  for(const file of fs.readdirSync(dist,{recursive:true}).filter(p=>p.endsWith('.html'))){
   const html=read(file);assert.equal([...html.matchAll(/<h1(?: |>)/g)].length,1,file);
   const title=html.match(/<title>(.*?)<\/title>/)[1],description=html.match(/name="description" content="([^"]+)"/)[1];
-  assert.ok(!titles.has(title),file);titles.add(title);assert.ok(!descriptions.has(description),file);descriptions.add(description);
+  const lang=html.match(/<html lang="([^"]+)"/)[1];
+  assert.ok(!titles.has(lang+':'+title),file);titles.add(lang+':'+title);assert.ok(!descriptions.has(lang+':'+description),file);descriptions.add(lang+':'+description);
   for(const [,href] of html.matchAll(/href="([/#][^"]*)"/g)){
    const [url,anchor]=href.split('#');const target=url?read(url.endsWith('/')?url+'index.html':url):html;
    if(anchor)assert.ok(target.includes('id="'+anchor+'"'),file+' -> '+href);

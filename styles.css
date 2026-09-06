@@ -219,3 +219,15 @@ body::before{display:none}
 }
 
 .public-intro{margin:32px 0;max-width:none}.public-intro h2{font-size:1.25rem}.article-toc,.related-guides{padding:20px 24px;border:1px solid #e3e8ef;border-radius:16px;background:#f8fafc;margin:28px 0}.article-toc h2,.related-guides h2{margin-top:0;font-size:1.1rem}.article-body section[id]{scroll-margin-top:24px}.breadcrumb{display:flex;flex-wrap:wrap;gap:8px;line-height:1.6}.breadcrumb a[aria-current="page"]{color:inherit}
+
+/* Public language links remain crawlable and usable without JavaScript. */
+.language-links{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;padding:10px 20px;max-width:1120px;margin:auto;font-size:13px;line-height:1.6}
+.language-links a{color:var(--muted,#586579);padding:3px 0;text-decoration:none}
+.language-links a:hover,.language-links a[aria-current="page"]{color:#245cdb;text-decoration:underline;text-underline-offset:4px}
+html:not([lang="ko"]) .app-heading h1{font-size:clamp(25px,4.5vw,42px);line-height:1.25;max-width:880px;text-wrap:balance}
+html:not([lang="ko"]) .button{white-space:normal;line-height:1.4}
+html:not([lang="ko"]) .address-box{min-width:0}
+html:not([lang="ko"]) .mailbox-top{gap:12px;flex-wrap:wrap}
+html:not([lang="ko"]) .mailbox-bottom{gap:12px;flex-wrap:wrap}
+.home-faq{margin:36px 0}
+@media(max-width:600px){.language-links{gap:4px 14px;font-size:12px;padding:8px 16px}html:not([lang="ko"]) .address-box{flex-wrap:wrap}html:not([lang="ko"]) .address-box input{width:100%;min-width:0;flex-basis:100%}html:not([lang="ko"]) .address-box .button{flex:1 1 auto}html:not([lang="ko"]) .header-inner{gap:12px}html:not([lang="ko"]) .header-links{gap:12px;font-size:12px}html:not([lang="ko"]) .inbox-footer{flex-wrap:wrap;gap:8px}html:not([lang="ko"]) .steps{grid-template-columns:1fr}}

@@ -48,7 +48,7 @@ test('public build is crawlable, linked, and never ships API source or secrets',
   assert.ok(files.length >= 12);
   for (const file of files) {
     const html = fs.readFileSync(path.join(dist,file),'utf8');
-    assert.match(html,/<html lang="ko">/);
+    assert.match(html,/<html lang="(?:ko|en|ja|es|pt|fr|de)">/);
     assert.match(html,/<title>[^<]+<\/title>/);
     assert.match(html,/<meta name="description" content="[^"]+"/);
     for (const [, href] of html.matchAll(/href="(\/[^"#?]*)/g)) {

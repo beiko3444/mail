@@ -122,7 +122,7 @@
       const meta = document.createElement('p'); meta.className = 'detail-meta'; meta.textContent = (message.from || '발신자 없음') + ' · ' + formatDate(message.createdAt);
       const body = document.createElement('pre'); body.textContent = message.text || '표시할 텍스트가 없어요. HTML 원문과 첨부파일은 지원하지 않습니다.';
       target.append(title, meta, body);
-      const code = message.text?.match(/(?:인증(?:번호|코드)|verification code|passcode|OTP)[^\d]{0,30}(\d{4,8})\b/i)?.[1];
+      const code = message.text?.match(/(?:인증(?:번호|코드)|verification code|passcode|OTP|認証(?:番号|コード)|c[oó]digo(?: de (?:verificaci[oó]n|verifica[cç][aã]o))?|code de v[eé]rification|Best[aä]tigungscode)[^\d]{0,30}(\d{4,8})\b/i)?.[1];
       if (code) {
         const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'code-copy'; copy.textContent = '인증번호 ' + code + ' 복사';
         copy.addEventListener('click', () => copyText(code, copy, '인증번호 ' + code + ' 복사')); target.insertBefore(copy, body);

@@ -29,7 +29,7 @@ function createServer() {
     if(!pathname.endsWith('/')){res.writeHead(308,{Location:pathname+'/'+url.search});return res.end();}
     file=path.join(file,'index.html');
    }
-   if(pathname==='/' || pathname==='/index.html')res.setHeader('Content-Security-Policy',inboxCsp);
+   if(pathname==='/' || pathname==='/index.html' || /^\/(en|ja|es|pt|fr|de)(\/|$)/.test(pathname))res.setHeader('Content-Security-Policy',inboxCsp);
    const exists=fs.existsSync(file)&&fs.statSync(file).isFile();
    if(!exists)file=path.join(root,'404.html');
    res.setHeader('Content-Type',types[path.extname(file)]||'application/octet-stream');

@@ -1,0 +1,89 @@
+수신 시각 없음|Time unavailable|受信時刻なし|Hora no disponible|Horário indisponível|Heure indisponible|Zeit unbekannt
+연결을 확인하고 있어요. 잠시 후 자동으로 다시 시도해요.|Checking the connection. Retrying shortly.|接続を確認しています。まもなく再試行します。|Comprobando la conexión. Reintentaremos pronto.|Verificando a conexão. Tentaremos novamente em breve.|Vérification de la connexion. Nouvelle tentative bientôt.|Verbindung wird geprüft. Neuer Versuch folgt.
+연결이 원활하지 않아요. 잠시 후 다시 시도해 주세요.|Connection failed. Please try again shortly.|接続できません。しばらくしてから再試行してください。|Error de conexión. Inténtalo de nuevo en unos instantes.|Falha na conexão. Tente novamente em instantes.|Connexion impossible. Réessayez dans un instant.|Verbindung fehlgeschlagen. Bitte gleich erneut versuchen.
+처리 중…|Working…|処理中…|Procesando…|Processando…|Traitement…|Wird verarbeitet…
+새 주소|New address|新しいアドレス|Nueva dirección|Novo endereço|Nouvelle adresse|Neue Adresse
+무료 주소 만들기|Create free address|無料アドレスを作成|Crear dirección gratis|Criar endereço grátis|Créer une adresse gratuite|Kostenlose Adresse erstellen
+발급한 순간부터 24시간 이용|Available for 24 hours after creation|作成から24時間利用可能|Disponible 24 horas desde su creación|Disponível por 24 horas após a criação|Disponible 24 heures après la création|Ab Erstellung 24 Stunden verfügbar
+주소를 만들면 새 메일을 자동으로 확인해요.|Create an address to check for new mail automatically.|アドレスを作成すると新着メールを自動で確認します。|Crea una dirección para consultar nuevos mensajes automáticamente.|Crie um endereço para verificar novas mensagens automaticamente.|Créez une adresse pour vérifier automatiquement les nouveaux messages.|Erstelle eine Adresse, um neue Nachrichten automatisch abzurufen.
+주소 복사|Copy address|アドレスをコピー|Copiar dirección|Copiar endereço|Copier l’adresse|Adresse kopieren
+새 메일을 기다리고 있어요|Waiting for new mail|新着メールを待っています|Esperando nuevos mensajes|Aguardando novas mensagens|En attente de nouveaux messages|Warte auf neue Nachrichten
+첫 메일을 받을 준비|Ready for your first email|メールを受信する準備ができました|Todo listo para tu primer correo|Tudo pronto para seu primeiro email|Prêt à recevoir votre premier email|Bereit für deine erste E-Mail
+주소를 복사해 사용해 보세요. 도착한 메일은 여기에 자동으로 표시돼요.|Copy and use your address. Incoming mail will appear here.|アドレスをコピーして使ってください。受信したメールはここに表示されます。|Copia y usa tu dirección. Los mensajes recibidos aparecerán aquí.|Copie e use seu endereço. As mensagens recebidas aparecerão aqui.|Copiez et utilisez votre adresse. Les messages reçus s’afficheront ici.|Kopiere und nutze deine Adresse. Eingehende Nachrichten erscheinen hier.
+위에서 무료 주소를 만들면 도착한 메일을 여기서 확인할 수 있어요.|Create a free address above to read incoming mail here.|上で無料アドレスを作成すると、ここで受信メールを確認できます。|Crea una dirección gratis arriba para leer aquí los mensajes recibidos.|Crie um endereço grátis acima para ler as mensagens aqui.|Créez une adresse gratuite ci-dessus pour lire vos messages ici.|Erstelle oben eine kostenlose Adresse, um hier Nachrichten zu lesen.
+발신자 없음|Unknown sender|差出人なし|Remitente desconocido|Remetente desconhecido|Expéditeur inconnu|Unbekannter Absender
+(제목 없음)|(No subject)|(件名なし)|(Sin asunto)|(Sem assunto)|(Sans objet)|(Kein Betreff)
+메일을 열고 있어요|Opening message|メールを開いています|Abriendo mensaje|Abrindo mensagem|Ouverture du message|Nachricht wird geöffnet
+잠시만 기다려 주세요.|Please wait a moment.|しばらくお待ちください。|Espera un momento.|Aguarde um instante.|Veuillez patienter un instant.|Bitte einen Moment warten.
+표시할 텍스트가 없어요. HTML 원문과 첨부파일은 지원하지 않습니다.|No readable text. Raw HTML and attachments are not supported.|表示できるテキストがありません。HTML原文と添付ファイルには対応していません。|No hay texto disponible. No se admiten HTML original ni archivos adjuntos.|Não há texto disponível. HTML original e anexos não são compatíveis.|Aucun texte disponible. Le HTML brut et les pièces jointes ne sont pas pris en charge.|Kein lesbarer Text. HTML-Original und Anhänge werden nicht unterstützt.
+인증번호 |Code |認証コード |Código |Código |Code |Code 
+ 복사| — copy|をコピー| — copiar| — copiar| — copier| kopieren
+메일함 접근을 확인할 수 없어요. 새로 확인해 주세요.|Mailbox access could not be verified. Please try again.|メールボックスへのアクセスを確認できません。再試行してください。|No se pudo verificar el acceso al buzón. Inténtalo de nuevo.|Não foi possível verificar o acesso à caixa de entrada. Tente novamente.|L’accès à la boîte n’a pas pu être vérifié. Réessayez.|Zugriff auf das Postfach konnte nicht geprüft werden. Bitte erneut versuchen.
+메일을 열지 못했어요|Could not open message|メールを開けませんでした|No se pudo abrir el mensaje|Não foi possível abrir a mensagem|Impossible d’ouvrir le message|Nachricht konnte nicht geöffnet werden
+다시 열기|Try opening again|もう一度開く|Volver a abrir|Abrir novamente|Réessayer|Erneut öffnen
+수신량이 많아 목록을 나누어 확인하고 있어요. 새로고침하면 이어서 확인해요.|Loading messages in batches. Refresh to continue.|メールを分けて読み込んでいます。更新すると続きが表示されます。|Cargando mensajes por lotes. Actualiza para continuar.|Carregando mensagens em lotes. Atualize para continuar.|Chargement des messages par lots. Actualisez pour continuer.|Nachrichten werden schrittweise geladen. Aktualisiere zum Fortfahren.
+메일이 도착했어요. 목록에서 열어 보세요.|You have new mail. Open a message from the list.|メールが届きました。一覧から開いてください。|Tienes correo nuevo. Abre un mensaje de la lista.|Você recebeu email. Abra uma mensagem na lista.|Vous avez du courrier. Ouvrez un message dans la liste.|Neue E-Mail erhalten. Öffne eine Nachricht aus der Liste.
+주소를 복사해 사용해 보세요. 새 메일을 기다리고 있어요.|Copy and use your address. Waiting for new mail.|アドレスをコピーして使ってください。新着メールを待っています。|Copia y usa tu dirección. Esperando nuevos mensajes.|Copie e use seu endereço. Aguardando novas mensagens.|Copiez et utilisez votre adresse. En attente de messages.|Kopiere und nutze deine Adresse. Warte auf neue Nachrichten.
+ 확인 · 20초마다 자동 확인| checked · refreshes every 20 seconds| 確認 · 20秒ごとに更新| · actualización cada 20 segundos| · atualização a cada 20 segundos| · actualisation toutes les 20 secondes| geprüft · Aktualisierung alle 20 Sekunden
+24시간 이용이 끝났어요. 새 주소로 다시 시작해 주세요.|Your 24 hours have ended. Create a new address to continue.|24時間の利用期間が終了しました。新しいアドレスを作成してください。|Han pasado las 24 horas. Crea una dirección nueva para continuar.|Suas 24 horas terminaram. Crie um novo endereço para continuar.|Les 24 heures sont écoulées. Créez une nouvelle adresse.|Die 24 Stunden sind abgelaufen. Erstelle eine neue Adresse.
+남은 시간 |Time left: |残り |Tiempo restante: |Tempo restante: |Temps restant : |Verbleibend: 
+시간 |h |時間 |h |h |h |Std. 
+분|min|分|min|min|min|Min.
+메일함을 닫을까요?|Close this mailbox?|メールボックスを閉じますか？|¿Cerrar este buzón?|Fechar esta caixa de entrada?|Fermer cette boîte mail ?|Dieses Postfach schließen?
+새 주소를 만들까요?|Create a new address?|新しいアドレスを作成しますか？|¿Crear una dirección nueva?|Criar um novo endereço?|Créer une nouvelle adresse ?|Neue Adresse erstellen?
+메일함 닫기|Close mailbox|メールボックスを閉じる|Cerrar buzón|Fechar caixa de entrada|Fermer la boîte|Postfach schließen
+새 주소 만들기|Create new address|新しいアドレスを作成|Crear nueva dirección|Criar novo endereço|Créer une nouvelle adresse|Neue Adresse erstellen
+현재 주소와 받은 메일을 이 브라우저에서 다시 열 수 없어요. 필요한 내용을 먼저 확인해 주세요. 수신 업체의 원본 메일까지 즉시 삭제되지는 않습니다.|You will lose access to this mailbox in this browser. Save what you need first. Stored provider copies are not immediately deleted.|このブラウザーから現在のメールボックスにアクセスできなくなります。必要な内容を先に保存してください。提供事業者の保存データは直ちに削除されません。|Perderás el acceso a este buzón en este navegador. Guarda lo necesario antes. Las copias del proveedor no se eliminan inmediatamente.|Você perderá o acesso a esta caixa neste navegador. Salve o necessário antes. As cópias do provedor não são excluídas imediatamente.|Vous perdrez l’accès à cette boîte dans ce navigateur. Conservez d’abord ce qui est nécessaire. Les copies du prestataire ne sont pas supprimées immédiatement.|Du verlierst in diesem Browser den Zugriff auf dieses Postfach. Sichere vorher wichtige Inhalte. Gespeicherte Kopien beim Anbieter werden nicht sofort gelöscht.
+현재 주소 대신 새 주소를 만들어요. 기존 메일함을 이 브라우저에서 다시 열 수 없으니 필요한 내용을 먼저 확인해 주세요. 수신 업체의 원본 메일까지 즉시 삭제되지는 않습니다.|A new address replaces this mailbox. You will lose access to the old one. Save what you need first; stored provider copies are not immediately deleted.|新しいアドレスに切り替えると、以前のメールボックスにはアクセスできなくなります。必要な内容を先に保存してください。提供事業者のデータは直ちに削除されません。|Una dirección nueva sustituirá este buzón. Perderás el acceso al anterior. Guarda lo necesario; las copias del proveedor no se eliminan inmediatamente.|Um novo endereço substituirá esta caixa. Você perderá o acesso à anterior. Salve o necessário; as cópias do provedor não são excluídas imediatamente.|La nouvelle adresse remplacera cette boîte. Vous perdrez l’accès à l’ancienne. Conservez le nécessaire ; les copies du prestataire ne sont pas supprimées immédiatement.|Eine neue Adresse ersetzt dieses Postfach. Der Zugriff auf das alte geht verloren. Sichere benötigte Inhalte; Kopien beim Anbieter werden nicht sofort gelöscht.
+내 임시 이메일이 준비됐어요. 주소를 복사해 보세요.|Your temporary email is ready. Copy your address.|一時メールの準備ができました。アドレスをコピーしてください。|Tu correo temporal está listo. Copia la dirección.|Seu email temporário está pronto. Copie o endereço.|Votre email temporaire est prêt. Copiez l’adresse.|Deine temporäre E-Mail ist bereit. Kopiere die Adresse.
+메일함을 닫았어요. 필요할 때 새 주소를 만들 수 있어요.|Mailbox closed. Create a new address whenever you need one.|メールボックスを閉じました。必要なときに新しいアドレスを作成できます。|Buzón cerrado. Crea una dirección nueva cuando la necesites.|Caixa fechada. Crie um novo endereço quando precisar.|Boîte fermée. Créez une nouvelle adresse quand vous en avez besoin.|Postfach geschlossen. Bei Bedarf kannst du eine neue Adresse erstellen.
+복사 완료|Copied|コピーしました|Copiado|Copiado|Copié|Kopiert
+메일함을 이어서 사용할 수 있어요.|Your mailbox is ready to use again.|メールボックスを引き続き利用できます。|Puedes seguir usando tu buzón.|Você pode continuar usando sua caixa.|Vous pouvez continuer à utiliser votre boîte.|Du kannst dein Postfach weiter nutzen.
+무료 주소 만들기를 눌러 시작하세요.|Select Create free address to get started.|「無料アドレスを作成」を押して始めてください。|Selecciona Crear dirección gratis para empezar.|Selecione Criar endereço grátis para começar.|Sélectionnez Créer une adresse gratuite pour commencer.|Wähle Kostenlose Adresse erstellen, um zu beginnen.
+메일 서비스를 확인하고 있어요.|Checking the mail service.|メールサービスを確認しています。|Comprobando el servicio de correo.|Verificando o serviço de email.|Vérification du service de messagerie.|E-Mail-Dienst wird geprüft.
+메일 수신 서비스를 준비 중이에요. 잠시 후 다시 확인해 주세요.|Mail service is temporarily unavailable. Please check again shortly.|メールサービスは一時的に利用できません。しばらくしてからご確認ください。|El servicio no está disponible temporalmente. Vuelve a intentarlo pronto.|O serviço está temporariamente indisponível. Tente novamente em breve.|Le service est temporairement indisponible. Réessayez bientôt.|Der Dienst ist vorübergehend nicht verfügbar. Bitte später erneut versuchen.
+확인 중…|Checking…|確認中…|Comprobando…|Verificando…|Vérification…|Wird geprüft…
+새로고침|Refresh|更新|Actualizar|Atualizar|Actualiser|Aktualisieren
+가입 없이 · 무료로 · 24시간|No signup · Free · 24 hours|登録不要 · 無料 · 24時間|Sin registro · Gratis · 24 horas|Sem cadastro · Grátis · 24 horas|Sans inscription · Gratuit · 24 heures|Ohne Anmeldung · Kostenlos · 24 Stunden
+내 임시 이메일|Your temporary email|あなたの一時メール|Tu correo temporal|Seu email temporário|Votre email temporaire|Deine temporäre E-Mail
+무료 · 가입 불필요|Free · No signup|無料 · 登録不要|Gratis · Sin registro|Grátis · Sem cadastro|Gratuit · Sans inscription|Kostenlos · Ohne Anmeldung
+내 임시 이메일 주소|Your temporary email address|あなたの一時メールアドレス|Tu dirección de correo temporal|Seu endereço de email temporário|Votre adresse email temporaire|Deine temporäre E-Mail-Adresse
+나만의 임시 주소를 만들어 보세요|Create your temporary address|一時アドレスを作成してください|Crea tu dirección temporal|Crie seu endereço temporário|Créez votre adresse temporaire|Erstelle deine temporäre Adresse
+메일함 남은 이용시간|Mailbox time remaining|メールボックスの残り時間|Tiempo restante del buzón|Tempo restante da caixa|Durée restante de la boîte|Verbleibende Nutzungszeit
+다시 시도|Try again|再試行|Reintentar|Tentar novamente|Réessayer|Erneut versuchen
+받은편지함|Inbox|受信トレイ|Bandeja de entrada|Caixa de entrada|Boîte de réception|Posteingang
+발신자|Sender|差出人|Remitente|Remetente|Expéditeur|Absender
+제목|Subject|件名|Asunto|Assunto|Objet|Betreff
+수신시간|Received|受信日時|Recibido|Recebido|Reçu|Empfangen
+메일 내용|Message content|メールの内容|Contenido del mensaje|Conteúdo da mensagem|Contenu du message|Nachrichteninhalt
+목록으로|Back to inbox|一覧に戻る|Volver al buzón|Voltar à caixa|Retour à la boîte|Zurück zum Posteingang
+텍스트로 보기|Text view|テキスト表示|Vista de texto|Visualização de texto|Vue texte|Textansicht
+메일이 오지 않나요?|Missing an email?|メールが届きませんか？|¿No llega un correo?|O email não chegou?|Un email n’arrive pas ?|E-Mail nicht angekommen?
+보관 안내|Retention details|保存について|Información de conservación|Sobre a retenção|Détails de conservation|Informationen zur Speicherung
+유지할게요|Keep current mailbox|現在のメールボックスを維持|Mantener el buzón actual|Manter a caixa atual|Conserver la boîte actuelle|Aktuelles Postfach behalten
+직접 복사해 주세요|Copy manually|手動でコピーしてください|Copia manualmente|Copie manualmente|Copiez manuellement|Manuell kopieren
+브라우저에서 자동 복사를 허용하지 않았어요. 아래 내용을 길게 누르거나 복사 단축키를 사용해 주세요.|Automatic copying was blocked. Select the text below and use your copy shortcut.|自動コピーが許可されていません。下のテキストを選択してコピーしてください。|El navegador bloqueó la copia automática. Selecciona el texto y cópialo manualmente.|A cópia automática foi bloqueada. Selecione o texto abaixo e copie manualmente.|La copie automatique est bloquée. Sélectionnez le texte ci-dessous et copiez-le.|Automatisches Kopieren wurde blockiert. Markiere den Text unten und kopiere ihn manuell.
+복사할 내용|Text to copy|コピーする内容|Texto para copiar|Texto para copiar|Texte à copier|Zu kopierender Text
+확인|OK|確認|Aceptar|OK|OK|OK
+본문으로 건너뛰기|Skip to content|本文へ移動|Ir al contenido|Ir para o conteúdo|Aller au contenu|Zum Inhalt
+이용 가이드|Guides|使い方ガイド|Guías|Guias|Guides pratiques|Anleitungen
+자주 묻는 질문|FAQ|よくある質問|Preguntas frecuentes|Perguntas frequentes|Questions fréquentes|Häufige Fragen
+서비스 소개|About|サービスについて|Acerca del servicio|Sobre o serviço|À propos|Über den Dienst
+문의|Contact|お問い合わせ|Contacto|Contato|Contact|Kontakt
+개인정보처리방침|Privacy|プライバシー|Privacidad|Privacidade|Confidentialité|Datenschutz
+이용약관|Terms|利用規約|Condiciones|Termos|Conditions|Nutzungsbedingungen
+주 메뉴|Main navigation|メインメニュー|Navegación principal|Navegação principal|Navigation principale|Hauptnavigation
+서비스 안내|Service information|サービス案内|Información del servicio|Informações do serviço|Informations sur le service|Dienstinformationen
+홈|Home|ホーム|Inicio|Início|Accueil|Startseite
+언어|Language|言語|Idioma|Idioma|Langue|Sprache
+이렇게 사용하세요|How to use temporary email|一時メールの使い方|Cómo usar el correo temporal|Como usar email temporário|Comment utiliser un email temporaire|So nutzt du temporäre E-Mails
+주소 만들기|Create an address|アドレスを作成|Crea una dirección|Crie um endereço|Créez une adresse|Adresse erstellen
+필요한 곳에 사용하기|Copy it where you need it|必要な場所に入力|Cópiala donde la necesites|Copie onde precisar|Copiez-la où vous en avez besoin|Adresse am gewünschten Ort nutzen
+도착한 메일 확인하기|Read incoming messages|受信メールを確認|Lee los mensajes recibidos|Leia as mensagens recebidas|Lisez les messages reçus|Eingehende Nachrichten lesen
+가입 없이 임시 이메일을 발급받아요.|Get a temporary address without signing up.|登録せずに一時アドレスを取得します。|Obtén una dirección temporal sin registrarte.|Obtenha um endereço temporário sem cadastro.|Obtenez une adresse temporaire sans inscription.|Erhalte eine temporäre Adresse ohne Anmeldung.
+주소를 복사해 메일을 받을 곳에 입력해요.|Copy the address into the service you are using.|利用するサービスにアドレスを入力します。|Copia la dirección en el servicio que estés usando.|Copie o endereço no serviço que estiver usando.|Copiez l’adresse dans le service que vous utilisez.|Trage die Adresse beim gewünschten Dienst ein.
+받은편지함에서 내용을 바로 확인해요.|Open your inbox to read the message as text.|受信トレイでメールをテキストとして読みます。|Abre el buzón para leer el mensaje como texto.|Abra a caixa para ler a mensagem como texto.|Ouvrez la boîte pour lire le message sous forme de texte.|Öffne den Posteingang und lies die Nachricht als Text.
+참고 자료|Sources|参考資料|Fuentes|Fontes|Sources|Quellen
+관련 가이드|Related guides|関連ガイド|Guías relacionadas|Guias relacionados|Guides associés|Weitere Anleitungen
+요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.|Too many requests. Please wait a minute and try again.|リクエストが多すぎます。1分ほど待って再試行してください。|Demasiadas solicitudes. Espera un minuto y vuelve a intentarlo.|Muitas solicitações. Aguarde um minuto e tente novamente.|Trop de requêtes. Attendez une minute avant de réessayer.|Zu viele Anfragen. Warte eine Minute und versuche es erneut.
+요청을 허용할 수 없습니다. 페이지를 새로고침해 주세요.|This request is not allowed. Please reload the page.|このリクエストは許可されていません。ページを再読み込みしてください。|No se permite esta solicitud. Recarga la página.|Esta solicitação não é permitida. Recarregue a página.|Cette requête n’est pas autorisée. Rechargez la page.|Diese Anfrage ist nicht erlaubt. Bitte lade die Seite neu.

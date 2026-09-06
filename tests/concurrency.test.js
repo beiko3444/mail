@@ -11,7 +11,7 @@ const mailbox = {
   createdAt: Date.now(), expiresAt: Date.now() + 86400000,
 };
 
-function appHarness({ clipboardFails = false, clipboardWrite } = {}) {
+function appHarness({ clipboardFails = false, clipboardWrite, source = 'app.js' } = {}) {
   const nodes = new Map(), documentEvents = new Map(), timers = new Map();
   const requests = [];
   let timerId = 0;
@@ -54,7 +54,7 @@ function appHarness({ clipboardFails = false, clipboardWrite } = {}) {
       return new Promise(resolve => requests.push({ url, method: options.method, resolve }));
     },
   };
-  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'), context);
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, source), 'utf8'), context);
   return {
     nodes, requests, timers, document,
     take(url, method = 'GET') {
@@ -333,3 +333,23 @@ test('failed provider requests release admission slots for later requests', asyn
   await provider.drain();
   assert.equal((await recovered).id, 'recovered');
 });
+
+
+for (const [language, codeLabel] of [['en','Verification code'],['ja','認証コード'],['es','Código de verificación'],['pt','Código de verificação'],['fr','Code de vérification'],['de','Bestätigungscode']]) {
+  test(`${language} mailbox translates backend errors and copies a localized verification code`, async () => {
+    const app = appHarness({source: `dist/${language}/app.js`, clipboardFails:true});
+    await app.reply(app.take('/api/config'), {error:'요청이 너무 많습니다.'}, 429);
+    assert.doesNotMatch(app.nodes.get('statusText').textContent, /[가-힣]/);
+    assert.ok(app.nodes.get('statusText').textContent.length > 10);
+    app.click('retryBtn'); await app.boot(mailbox);
+    app.click('refreshBtn');
+    const message={id:'localized-code',from:'sender@example.org',subject:'Test',createdAt:new Date().toISOString()};
+    await app.reply(app.take('/api/messages'),{address:mailbox.address,messages:[message]});
+    app.nodes.get('messageList').children[0].fire('click');
+    await app.reply(app.take('/api/messages/localized-code'),{...message,address:mailbox.address,text:codeLabel+' 123456'});
+    const copy=app.nodes.get('messageDetail').children.find(node=>node.className==='code-copy');
+    assert.ok(copy,language+' verification code'); assert.doesNotMatch(copy.textContent,/[가-힣]/);
+    copy.fire('click'); await flush();
+    assert.equal(app.nodes.get('manualCopyText').value,'123456');
+  });
+}
