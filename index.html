@@ -1,6 +1,6 @@
 <main id="main" class="container app-main">
   <div class="app-heading">
-    <div><p class="eyebrow">가입 없이 · 무료로 · 24시간</p><h1>잠깐 쓸 이메일,<br><span>하루메일로 가볍게.</span></h1><p class="heading-description">주소를 만들고 복사하면 끝.<br class="mobile-break"> 도착한 메일은 아래에서 확인하세요.</p></div>
+    <div><p class="eyebrow">가입 없이 · 무료로 · 24시간</p><h1>필요한 순간, <span>하루메일</span></h1><p class="heading-description">주소를 복사해 사용하고, 도착한 메일을 확인하세요.</p></div>
   </div>
 
   <section id="mailboxCard" class="mailbox-card" data-has-mailbox="false" aria-labelledby="mail-title">
@@ -22,6 +22,7 @@
     <div class="inbox-toolbar"><div class="inbox-title"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4-2 10v6h20v-6L20 4Z"/><path d="M2 14h6l2 3h4l2-3h6"/></svg><h2>받은편지함</h2><span id="messageCount" class="count-badge">0</span></div><button id="refreshBtn" class="button button-quiet" type="button" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 6a8 8 0 0 1 13 3M5 15a8 8 0 0 0 13 3"/></svg><span id="refreshLabel">새로고침</span></button></div>
     <div class="inbox-layout" data-nosnippet>
       <div id="listPanel" class="inbox-list-panel">
+        <div class="message-columns" aria-hidden="true"><span>발신자</span><span>제목</span><span>수신시간</span></div>
         <div id="messageList" class="message-list"><div class="empty-state"><span class="empty-symbol" aria-hidden="true">✉</span><h3>첫 메일을 받을 준비</h3><p>위에서 무료 주소를 만들면<br>도착한 메일을 여기서 확인할 수 있어요.</p><span class="empty-note">회원가입 없이, 몇 번의 클릭만으로</span></div></div>
       </div>
       <section id="detailPanel" class="detail-panel" aria-label="메일 내용" hidden>

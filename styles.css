@@ -1,7 +1,7 @@
 /* Centered mail workspace */
 :root{
-  --ink:#172033;--muted:#667085;--faint:#98a2b3;--blue:#2563eb;--blue-hover:#1d4ed8;--blue-soft:#eff6ff;
-  --violet:#475569;--line:#e4e7ec;--paper:#f8fafc;--white:#fff;--green:#039855;--radius:14px;
+  --ink:#20242c;--muted:#606875;--faint:#737c89;--blue:#2458d3;--blue-hover:#1b46ad;--blue-soft:#eef3fd;
+  --violet:#606875;--line:#e1e4e9;--paper:#f5f6f8;--white:#fff;--green:#16804a;--radius:12px;
   font-family:Inter,"Pretendard Variable","Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
   color:var(--ink);background:var(--paper);font-synthesis:none;font-size:16px;
 }
@@ -141,43 +141,52 @@ dialog::backdrop{background:#16284866;backdrop-filter:blur(3px)}dialog h2{font-s
 /* A single central axis: address first, inbox second, reference material last. */
 body::before{display:none}
 .site-header{position:static;inset:auto;width:100%;border:0;border-bottom:1px solid var(--line);background:#fff}
-.header-inner{width:min(1040px,calc(100% - 48px));height:76px;margin:auto;padding:0;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:nowrap}
+.header-inner{width:min(960px,calc(100% - 48px));height:72px;margin:auto;padding:0;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:nowrap}
 .brand{padding:0;font-size:1.35rem;gap:10px}
 .header-links{display:flex;align-items:center;gap:28px}
 .header-links a{display:flex;align-items:center;min-height:44px;color:var(--muted);text-decoration:none;font-size:.8125rem;font-weight:600}
 .header-links a:hover{color:var(--ink)}
 .site-body{margin-left:0}
 .container{width:min(960px,calc(100% - 48px))}
-.app-main{padding-top:52px}
+.app-main{padding-top:36px}
 .app-heading{display:block;text-align:center;margin-bottom:30px}
 .app-heading .eyebrow{font-size:.75rem;letter-spacing:.08em;margin-bottom:14px;color:#667085}
-.app-heading h1{font-size:clamp(2rem,3.5vw,2.75rem);line-height:1.3;letter-spacing:-1.7px;font-weight:780}
+.app-heading h1{font-size:clamp(1.65rem,3vw,2rem);line-height:1.4;letter-spacing:-1px;font-weight:750}
 .app-heading h1 span{color:var(--ink)}
 .heading-description{margin-top:16px;font-size:.9375rem;line-height:1.8}
 .mobile-break{display:none}
-.mailbox-card{max-width:780px;margin-inline:auto;padding:26px 32px 0;background:#172033;border-color:#172033;border-radius:18px;box-shadow:0 12px 30px #17203312;color:#fff}
-.mailbox-top{justify-content:center;margin-bottom:18px}
-.mailbox-top h2{font-size:.875rem;font-weight:500;color:#c9d3e4}
-.mailbox-top h2 .icon{color:#a5baff;width:18px;height:18px}
+.mailbox-card{max-width:none;margin-inline:auto;padding:24px 24px 0;background:var(--white);border-color:var(--line);border-radius:var(--radius);box-shadow:none;color:var(--ink)}
+.mailbox-top{justify-content:space-between;margin-bottom:16px}
+.mailbox-top h2{font-size:.9375rem;font-weight:650;color:var(--ink)}
+.mailbox-top h2 .icon{color:var(--muted);width:18px;height:18px}
 .free-label{display:none}
-.address-box{justify-content:center;flex-wrap:wrap;gap:12px;padding:0;background:none;border:0;border-radius:0}
-.address-box input{flex:0 0 100%;text-align:center;font-size:clamp(1rem,2.6vw,1.65rem);letter-spacing:-.5px;color:#fff;background:#ffffff08;border:1px solid #ffffff26;border-radius:10px;padding:15px 10px;line-height:1.6}
-.address-box input::placeholder{color:#b6c1d3;font-size:1rem}
-.address-box .button{min-height:46px;min-width:140px;padding:12px 24px}
-.address-box .copy-button{flex:none;background:#4777ff}
-.address-box .copy-button:hover:not(:disabled){background:#3567ed}
+.address-box{justify-content:flex-start;flex-wrap:nowrap;gap:12px;padding:0;background:none;border:0;border-radius:0}
+.address-box input{flex:1 1 0;text-align:left;font-size:clamp(1rem,1.8vw,1.25rem);letter-spacing:-.5px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px 16px;line-height:1.6}
+.address-box input::placeholder{color:var(--muted);font-size:.875rem}
+.address-box .button{min-height:50px;min-width:108px;padding:12px 18px;border-radius:8px}
+.address-box .copy-button{flex:none;background:var(--blue)}
+.address-box .copy-button:hover:not(:disabled){background:var(--blue-hover)}
 .address-box .create-button{margin:0}
-.address-box .button-light{background:#ffffff12;color:#e2e8f0;border:1px solid #ffffff26}
-.address-box .button-light:hover:not(:disabled){background:#ffffff20}
-.mailbox-bottom{justify-content:center;gap:24px;min-height:62px}
-.time-remaining,.mailbox-card .text-button{color:#b6c1d3;font-size:.75rem}
-.mailbox-card .text-button:hover{color:#fff}
+.address-box .button-light{background:var(--white);color:var(--ink);border:1px solid var(--line)}
+.address-box .button-light:hover:not(:disabled){background:var(--paper)}
+.mailbox-bottom{justify-content:space-between;gap:24px;min-height:58px}
+.time-remaining,.mailbox-card .text-button{color:var(--muted);font-size:.75rem}
+.mailbox-card .text-button:hover{color:#b42332}
 .time-remaining progress{display:none}
-.service-status{justify-content:center;margin:0 -32px;padding:12px 24px;border-color:#ffffff15;background:#101827}
-.service-status p{flex:0 1 auto;color:#b6c1d3;font-size:.75rem}
-.service-status p.is-error{color:#ffb6bd}
-.service-status .inline-action{color:#a8c0ff}
-.inbox-workspace{margin-top:32px;box-shadow:none;border-radius:12px}
+.service-status{justify-content:flex-start;margin:0 -24px;padding:12px 24px;border-color:var(--line);background:var(--white)}
+.service-status p{flex:1;color:var(--muted);font-size:.75rem}
+.service-status p.is-error{color:#b42332}
+.service-status .inline-action{color:var(--blue)}
+.inbox-workspace{margin-top:20px;box-shadow:none;border-radius:var(--radius)}
+.message-columns{display:grid;grid-template-columns:minmax(0,28%) minmax(0,1fr) 128px;gap:20px;padding:10px 24px;background:var(--paper);border-bottom:1px solid var(--line);font-size:.75rem;font-weight:600;color:var(--muted)}
+.message-columns span:last-child{text-align:right}
+.inbox-workspace[data-view=list] .message-item{display:grid;grid-template-columns:minmax(0,28%) minmax(0,1fr) 128px;gap:20px;padding:20px 24px;min-height:76px}
+.inbox-workspace[data-view=list] .message-summary{display:contents}
+.inbox-workspace[data-view=list] .sender-avatar,.inbox-workspace[data-view=list] .message-arrow{display:none}
+.inbox-workspace[data-view=list] .message-item time{text-align:right}
+.inbox-workspace[data-view=detail] .message-columns{display:none}
+.message-item.selected{background:var(--blue-soft)}
+.message-item:hover{background:var(--paper)}
 .inbox-toolbar{padding:16px 24px;background:#fff}
 .inbox-toolbar .button{min-height:44px}
 .empty-state{min-height:280px}
@@ -191,15 +200,19 @@ body::before{display:none}
   .brand{font-size:1.2rem}.brand-mark{width:30px;height:30px;border-radius:8px}
   .header-links{gap:14px}.header-links a{font-size:.7rem}
   .container{width:calc(100% - 32px)}.app-main{padding-top:34px}
-  .app-heading{margin-bottom:24px}.app-heading h1{font-size:2rem;letter-spacing:-1.2px}
+  .app-heading{margin-bottom:24px}.app-heading h1{font-size:1.65rem;letter-spacing:-.8px}
   .heading-description{font-size:.8125rem;margin-top:12px}.mobile-break{display:block}
-  .mailbox-card{padding:22px 16px 0;border-radius:14px}
-  .address-box input{font-size:clamp(.875rem,4vw,1.25rem);padding:14px 6px}
+  .mailbox-card{padding:20px 16px 0;border-radius:var(--radius)}
+  .address-box{flex-wrap:wrap;gap:10px}
+  .address-box input{flex:0 0 100%;font-size:clamp(.875rem,4vw,1.25rem);padding:12px 10px;text-align:center}
   .address-box input::placeholder{font-size:.8125rem}
   .address-box .button{min-width:0;flex:1;padding-inline:16px}
   .mailbox-bottom{gap:18px;min-height:60px}
   .service-status{margin:0 -16px;padding:12px 16px;gap:7px}
-  .service-status p{font-size:.7rem}.inbox-workspace{margin-top:24px}
+  .service-status p{font-size:.75rem}.inbox-workspace{margin-top:20px}
+  .message-columns{display:none}
+  .inbox-workspace[data-view=list] .message-item{grid-template-columns:minmax(0,1fr);gap:5px;padding:16px}
+  .inbox-workspace[data-view=list] .message-item time{padding:0;text-align:left;width:auto}
   .inbox-toolbar{padding:12px 16px}.privacy-note{text-align:left;padding:16px 0}
   .public-intro.article-body{margin-top:24px;padding-top:28px}
   .home-guide{gap:24px}.site-footer .container{width:calc(100% - 32px)}
