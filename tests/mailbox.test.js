@@ -8,7 +8,7 @@ test('random mailboxes are unique, signed, and expire after 24 hours', () => {
   const first = mailbox.issueMailbox(1000000);
   const second = mailbox.issueMailbox(1000000);
   assert.notEqual(first.mailbox.address, second.mailbox.address);
-  assert.match(first.mailbox.address, /^[a-f0-9]{32}@inbox\.xtracker\.co\.kr$/);
+  assert.match(first.mailbox.address, /^[a-z]{9,18}@inbox\.xtracker\.co\.kr$/);
   assert.equal(first.mailbox.expiresAt - first.mailbox.createdAt, 86400000);
   assert.deepEqual(mailbox.verifyToken(first.token, 1000001), first.mailbox);
   assert.throws(() => mailbox.verifyToken(first.token, 1000000 + 86400000));
