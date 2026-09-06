@@ -54,7 +54,7 @@
       ]
     },
     {
-      "source": "/en/:path*",
+      "source": "/en/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -63,7 +63,7 @@
       ]
     },
     {
-      "source": "/ja/:path*",
+      "source": "/ja/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -72,7 +72,7 @@
       ]
     },
     {
-      "source": "/es/:path*",
+      "source": "/es/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -81,7 +81,7 @@
       ]
     },
     {
-      "source": "/pt/:path*",
+      "source": "/pt/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -90,7 +90,7 @@
       ]
     },
     {
-      "source": "/fr/:path*",
+      "source": "/fr/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -99,7 +99,7 @@
       ]
     },
     {
-      "source": "/de/:path*",
+      "source": "/de/(.*)",
       "headers": [
         {
           "key": "Content-Security-Policy",

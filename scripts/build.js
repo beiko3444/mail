@@ -20,6 +20,8 @@ if (config.ads.approved && (!config.ads.consentReady || !cmp.trim() || !/^\d{10}
 const pages=require('../content/pages')(config,escape);
 const routes=[];
 const verification=process.env.GOOGLE_SITE_VERIFICATION ?? config.searchConsoleVerification ?? '';
+const verificationValues=process.env.GOOGLE_SITE_VERIFICATION !== undefined ? [verification].filter(Boolean) : [verification,...(config.searchConsoleAdditionalVerifications || [])].filter(Boolean);
+const verificationMarkup=[...new Set(verificationValues)].map(value=>`<meta name="google-site-verification" content="${escape(value)}">`).join('\n');
 function jsonLd(nodes) { return '<script type="application/ld+json">'+JSON.stringify({'@context':'https://schema.org','@graph':nodes}).replaceAll('<','\\u003c')+'</script>'; }
 function breadcrumb(guide) { return [{name:'홈',path:'/'},{name:'이용 가이드',path:'/guides/'},{name:guide.title,path:'/guides/'+guide.slug+'/'}]; }
 
@@ -59,7 +61,7 @@ ${type==='error'?'<meta name="robots" content="noindex">':''}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
 ${ads?cmp:''}
-${verification?`<meta name="google-site-verification" content="${escape(verification)}">`:""}
+${verificationMarkup}
 ${jsonLd(nodes)}
 ${extra}
 </head>
@@ -107,7 +109,7 @@ const faqBody=`<main id="main" class="container page-main">${heading('자주 묻
 save('/faq/',layout('자주 묻는 질문','무료 여부, 24시간 이용기간, 수신 문제와 메일 보관에 대한 답변입니다.',faqBody,'/faq/'));
 for(const page of pages)save(page.path,layout(page.title,page.description,documentPage(page),page.path));
 fs.writeFileSync(path.join(dist,'404.html'),layout('페이지를 찾을 수 없습니다','요청한 페이지를 찾을 수 없습니다. 임시메일이나 이용 가이드로 이동할 수 있습니다.',`<main id="main" class="container page-main"><div class="article-body"><span class="eyebrow ink">404</span><h1>이 페이지는 찾을 수 없어요.</h1><p>주소가 바뀌었거나 잘못 입력되었을 수 있습니다.</p><p><a class="button button-dark" href="/">임시메일로 돌아가기</a></p><p><a href="/guides/">이용 가이드 보기</a></p></div></main>`,'/404.html','error'));
-routes.push(...require('./i18n').buildLocales({root,dist,config,escape,verification,koreanRoutes:[...routes]}));
+routes.push(...require('./i18n').buildLocales({root,dist,config,escape,verificationMarkup,koreanRoutes:[...routes]}));
 fs.writeFileSync(path.join(dist,'robots.txt'),'User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: '+config.origin+'/sitemap.xml\n');
 fs.writeFileSync(path.join(dist,'sitemap.xml'),'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+routes.map(route=>'<url><loc>'+escape(config.origin+route)+'</loc></url>').join('')+'</urlset>\n');
 fs.writeFileSync(path.join(dist,'ads.txt'),config.ads.publisherId?'google.com, '+config.ads.publisherId+', DIRECT, f08c47fec0942fa0\n':'# No advertising sellers are authorized in this build.\n');

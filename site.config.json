@@ -8,5 +8,8 @@
     "approved": false,
     "consentReady": false
   },
-  "searchConsoleVerification": "JBoG0ghBZzETOT3d72-S1ZAkBGW19YGkmZCnn5PGI2Q"
+  "searchConsoleVerification": "JBoG0ghBZzETOT3d72-S1ZAkBGW19YGkmZCnn5PGI2Q",
+  "searchConsoleAdditionalVerifications": [
+    "YADuFd67d8RBbdJpG_RlvZh4wOClFujo9BrUjcu7thU"
+  ]
 }
