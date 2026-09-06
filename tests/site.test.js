@@ -24,7 +24,8 @@ test('mailbox issuance motion is scoped, sequenced, and disabled for reduced mot
   const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const issued = styles.match(/\.mailbox-card\.mailbox-issued\{([^}]*)\}/)?.[1];
   assert.ok(issued, 'mailbox-issued card styling should exist');
-  assert.match(issued, /animation\s*:\s*mailbox-arrival/);
+  assert.match(issued, /animation\s*:\s*mailbox-arrival\s+\.78s/,
+    'the card animation must outlast the delayed copy pulse so animationend cannot clear it early');
   assert.match(styles, /\.mailbox-card\.mailbox-issued\s+\.address-box\{[^}]*animation\s*:\s*address-reveal/);
   assert.match(styles, /\.mailbox-card\.mailbox-issued\s+\.copy-button\{[^}]*animation\s*:\s*copy-pulse/);
   for (const name of ['mailbox-arrival', 'address-reveal', 'copy-pulse']) {
