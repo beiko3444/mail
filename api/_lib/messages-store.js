@@ -1,4 +1,5 @@
 const crypto = require('node:crypto');
+const { decodeWords } = require('postal-mime');
 
 function config() {
   const url = String(process.env.SUPABASE_URL || process.env.ALIASES_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\/+$/, '');
@@ -36,10 +37,10 @@ async function request(pathname, options = {}) {
 function normalize(row) {
   return {
     id: String(row.id),
-    from: String(row.from_address || ''),
+    from: decodeWords(String(row.from_address || '')),
     to: [String(row.recipient || '').toLowerCase()],
     cc: [], bcc: [],
-    subject: String(row.subject || '(제목 없음)'),
+    subject: decodeWords(String(row.subject || '(제목 없음)')),
     text: String(row.text || ''),
     createdAt: row.received_at || row.created_at || ''
   };

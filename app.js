@@ -17,7 +17,7 @@
   async function request(path, method = 'GET') {
     const response = await fetch(path, { method, credentials: 'same-origin', headers: { Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(12000) });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw Object.assign(new Error(payload.error || '연결이 원활하지 않아요. 잠시 후 다시 시도해 주세요.'), { status: response.status });
+    if (!response.ok) throw Object.assign(new Error(typeof payload.error === 'string' ? payload.error : '연결이 원활하지 않아요. 잠시 후 다시 시도해 주세요.'), { status: response.status });
     return payload;
   }
   function controls() {

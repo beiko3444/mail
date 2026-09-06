@@ -54,6 +54,7 @@
       ]
     }
   ],
+  "rewrites": [{ "source": "/api/messages/:id/", "destination": "/api/message?id=:id" }],
   "redirects": [
     {
       "source": "/index.html",
