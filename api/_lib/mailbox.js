@@ -4,14 +4,22 @@ const COOKIE = 'xtmail_session';
 const creationWindows = new Map();
 const issuedAddresses = new Map();
 const WORDS = ['amber','apple','bloom','cedar','cloud','coral','daisy','dawn','ember','field','flame','forest','fox','glow','harbor','hazel','ivory','lake','lemon','lunar','maple','meadow','mint','mist','moss','ocean','olive','pearl','pine','plum','river','rose','sage','shell','sky','solar','stone','sunny','tiger','violet','wave','willow','wind'];
-function receiver() { return process.env.MAIL_RECEIVER === 'cloudflare' ? 'cloudflare' : 'resend'; }
+function receiver() {
+  if (process.env.MAIL_RECEIVER) return process.env.MAIL_RECEIVER === 'cloudflare' ? 'cloudflare' : 'resend';
+  return process.env.CLOUDFLARE_EMAIL_WEBHOOK_SECRET ? 'cloudflare' : 'resend';
+}
+function mailboxSecret() {
+  if (process.env.MAILBOX_SECRET) return process.env.MAILBOX_SECRET;
+  if (receiver() === 'cloudflare') return process.env.CLOUDFLARE_EMAIL_WEBHOOK_SECRET;
+  return process.env.RESEND_API_KEY;
+}
 function receivingConfigured() {
   if (receiver() === 'resend') return Boolean(process.env.RESEND_API_KEY);
-  return Boolean(process.env.MAILBOX_SECRET && require('./messages-store').isConfigured());
+  return Boolean(mailboxSecret() && require('./messages-store').isConfigured());
 }
 function failure(message, status = 401) { return Object.assign(new Error(message), { status }); }
 function secret() {
-  const key = process.env.MAILBOX_SECRET || process.env.RESEND_API_KEY;
+  const key = mailboxSecret();
   if (!key) throw failure('메일 수신 서비스를 준비 중입니다. 잠시 후 다시 방문해 주세요.', 503);
   return createHmac('sha256', key).update('xtmail:mailbox:v1').digest();
 }
