@@ -1,688 +1,130 @@
-const AUTO_REFRESH_MS = 15000;
-const STORAGE_KEYS = {
-  activeLocalPart: "xtracker-active-local-part",
-};
-
-const state = {
-  config: null,
-  activeAddress: "",
-  aliases: [],
-  messages: [],
-  activeMessageId: "",
-  activeMessage: null,
-  poller: null,
-};
-
-const currentInboxEl = document.querySelector("#currentInbox");
-const connectionBadgeEl = document.querySelector("#connectionBadge");
-const inboxHintEl = document.querySelector("#inboxHint");
-const statusTextEl = document.querySelector("#statusText");
-const modeLabelEl = document.querySelector("#modeLabel");
-const messageCountEl = document.querySelector("#messageCount");
-const messageCountPillEl = document.querySelector("#messageCountPill");
-const aliasCountEl = document.querySelector("#aliasCount");
-const localPartInputEl = document.querySelector("#localPartInput");
-const previewLocalEl = document.querySelector("#previewLocal");
-const previewDomainEl = document.querySelector("#previewDomain");
-const sessionCardEl = document.querySelector("#sessionCard");
-const aliasListEl = document.querySelector("#aliasList");
-const messageListEl = document.querySelector("#messageList");
-const codeListEl = document.querySelector("#codeList");
-const codeCountPillEl = document.querySelector("#codeCountPill");
-const messageDetailEl = document.querySelector("#messageDetail");
-const messageItemTemplateEl = document.querySelector("#messageItemTemplate");
-const codeItemTemplateEl = document.querySelector("#codeItemTemplate");
-const aliasItemTemplateEl = document.querySelector("#aliasItemTemplate");
-
-function sanitizeLocalPart(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, "-")
-    .replace(/-{2,}/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 32);
-}
-
-function getInboxDomain() {
-  return state.config?.inboxDomain || "inbox.xtracker.co.kr";
-}
-
-function buildAddress(localPart) {
-  return `${localPart}@${getInboxDomain()}`;
-}
-
-function formatDate(value) {
-  if (!value) {
-    return "-";
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const state = { mailbox: null, messages: [], revision: 0, detailRevision: 0, listRevision: 0, busy: false, ready: false, polling: null, failures: 0, selected: '' };
+  const formatDate = value => new Intl.DateTimeFormat('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(value));
+  function status(message,error=false) { $('statusText').textContent=message; $('statusText').classList.toggle('is-error',error); }
+  async function request(path,method='GET') {
+    const response=await fetch(path,{method,credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(12000)});
+    const payload=await response.json().catch(()=>({}));
+    if(!response.ok) throw Object.assign(new Error(payload.error || '연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.'),{status:response.status});
+    return payload;
   }
-
-  try {
-    return new Intl.DateTimeFormat("ko-KR", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(value));
-  } catch {
-    return value;
+  function controls() {
+    $('createBtn').disabled=state.busy || !state.ready;
+    $('createBtn').textContent=state.busy?'처리 중…':state.mailbox?'새 주소 만들기 ↗':'무료 주소 만들기 ↗';
+    for(const id of ['copyBtn','refreshBtn','closeBtn']) $(id).disabled=state.busy || !state.mailbox;
+    $('emailAddress').value=state.mailbox?.address || '';
   }
-}
-
-async function requestJson(url, options = {}) {
-  const response = await fetch(url, {
-    method: options.method || "GET",
-    headers: {
-      Accept: "application/json",
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...(options.headers || {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
-
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(payload.error || "요청에 실패했습니다.");
+  function empty(target,title,text) {
+    target.replaceChildren();
+    const box=document.createElement('div'); box.className='empty-state';
+    const heading=document.createElement('h3'); heading.textContent=title;
+    const paragraph=document.createElement('p'); paragraph.textContent=text;
+    box.append(heading,paragraph); target.append(box);
   }
-
-  return payload;
-}
-
-function looksLikeMixedCode(value) {
-  return /[a-z]/i.test(value) && /\d/.test(value);
-}
-
-function extractVerificationCode(message) {
-  const subject = String(message?.subject || "");
-  const intro = String(message?.intro || "");
-  const text = String(message?.text || "");
-  const source = `${subject}\n${intro}\n${text}`;
-
-  const keywordPattern =
-    /(?:인증\s*(?:번호|코드)|확인\s*(?:번호|코드)|보안\s*(?:번호|코드)|승인\s*(?:번호|코드)|otp|verification(?:\s*code)?|one[-\s]*time(?:\s*password)?|passcode)\D{0,24}([a-z0-9][a-z0-9\-\s]{2,14}[a-z0-9])/i;
-  const keywordMatch = source.match(keywordPattern);
-  if (keywordMatch?.[1]) {
-    return keywordMatch[1].replace(/[^a-z0-9]/gi, "").toUpperCase();
+  function clearMailbox() {
+    state.revision++; state.detailRevision++; state.mailbox=null; state.messages=[]; state.selected='';
+    clearTimeout(state.polling); controls(); renderMessages();
+    empty($('messageDetail'),'메일을 선택해 주세요','메일 본문은 외부 이미지를 불러오지 않고 텍스트로 보여드립니다.');
+    $('expiryText').textContent='주소 발급 후 24시간 이용';
   }
-
-  const sixDigitMatch = source.match(/\b\d{6}\b/);
-  if (sixDigitMatch?.[0]) {
-    return sixDigitMatch[0];
-  }
-
-  const numericMatch = source.match(/\b\d{4,8}\b/);
-  if (numericMatch?.[0]) {
-    return numericMatch[0];
-  }
-
-  const mixedMatch = source.match(/\b[a-z0-9]{6,10}\b/gi);
-  if (Array.isArray(mixedMatch)) {
-    const candidate = mixedMatch.find((item) => looksLikeMixedCode(item));
-    if (candidate) {
-      return candidate.toUpperCase();
+  function setMailbox(mailbox) { clearMailbox(); state.mailbox=mailbox; controls(); countdown(); }
+  function renderMessages() {
+    $('messageCount').textContent=String(state.messages.length);
+    if(!state.messages.length) return empty($('messageList'),'아직 메일이 없어요',state.mailbox?'메일이 도착하면 이곳에 표시됩니다.':'무료 주소를 만든 뒤 필요한 곳에 입력해 주세요.');
+    $('messageList').replaceChildren();
+    for(const message of state.messages) {
+      const button=document.createElement('button'); button.type='button'; button.className='message-item'+(state.selected===message.id?' selected':'');
+      button.setAttribute('aria-pressed',String(state.selected===message.id));
+      const subject=document.createElement('strong'); subject.textContent=message.subject;
+      const sender=document.createElement('span'); sender.textContent=message.from;
+      const time=document.createElement('time'); time.dateTime=message.createdAt; time.textContent=formatDate(message.createdAt);
+      button.append(sender,subject,time); button.addEventListener('click',()=>openMessage(message.id)); $('messageList').append(button);
     }
   }
-
-  return "";
-}
-
-function getMessagesWithCodes() {
-  return state.messages
-    .map((message) => ({ message, code: extractVerificationCode(message) }))
-    .filter((item) => item.code);
-}
-
-function setStatus(message, tone = "idle") {
-  statusTextEl.textContent = message;
-  connectionBadgeEl.className = `status-badge is-${tone}`;
-  connectionBadgeEl.textContent = tone === "connected" ? "정상" : tone === "error" ? "오류" : "대기";
-}
-
-function updatePreview() {
-  const localPart = sanitizeLocalPart(localPartInputEl.value) || "your-alias";
-  previewLocalEl.textContent = localPart;
-  previewDomainEl.textContent = `@${getInboxDomain()}`;
-}
-
-function getModeLabel() {
-  if (state.config?.sourceMode === "webhook-cache") {
-    return "캐시";
-  }
-  if (state.config?.apiConfigured) {
-    return "실시간";
-  }
-  return "설정 필요";
-}
-
-function getModeDescription() {
-  if (state.config?.sourceMode === "webhook-cache") {
-    return "실시간 API 없이 webhook 캐시 기준으로 동작";
-  }
-  if (state.config?.apiConfigured) {
-    return "실시간 수신 메일 조회 가능";
-  }
-  return "API 키 설정이 필요합니다";
-}
-
-function renderStats() {
-  const codeCount = getMessagesWithCodes().length;
-  messageCountEl.textContent = `${state.messages.length}`;
-  messageCountPillEl.textContent = `${state.messages.length}개`;
-  codeCountPillEl.textContent = `${codeCount}개`;
-  modeLabelEl.textContent = getModeLabel();
-  aliasCountEl.textContent = `${state.aliases.length}`;
-}
-
-function renderCurrentInbox() {
-  if (!state.activeAddress) {
-    currentInboxEl.textContent = "주소를 설정해보세요";
-    inboxHintEl.textContent = "메일 이름을 입력하거나 저장된 주소를 선택하세요.";
-    return;
-  }
-
-  currentInboxEl.textContent = state.activeAddress;
-  inboxHintEl.textContent = `${Math.floor(AUTO_REFRESH_MS / 1000)}초마다 자동으로 새 메일을 확인합니다.`;
-}
-
-function renderSessionCard() {
-  if (!state.config) {
-    sessionCardEl.textContent = "설정 확인 중";
-    return;
-  }
-
-  const aliasStoreType =
-    state.config.aliasStore?.type === "supabase-rest" || state.config.aliasStore?.type === "redis-rest"
-      ? "DB"
-      : state.config.aliasStore?.persistent
-        ? "로컬"
-        : "설정 필요";
-  sessionCardEl.textContent = `${getModeDescription()} · 주소 목록 저장: ${aliasStoreType} · 도메인: ${getInboxDomain()}`;
-}
-
-function renderAliases() {
-  if (!state.aliases.length) {
-    aliasListEl.className = "alias-grid empty-state";
-    aliasListEl.textContent = "저장한 주소가 아직 없습니다.";
-    return;
-  }
-
-  aliasListEl.className = "alias-grid";
-  aliasListEl.innerHTML = "";
-
-  state.aliases.forEach((address) => {
-    const fragment = aliasItemTemplateEl.content.cloneNode(true);
-    const item = fragment.querySelector(".alias-item");
-    const mainBtn = fragment.querySelector(".alias-main");
-    const addressEl = fragment.querySelector(".alias-item__address");
-    const metaEl = fragment.querySelector(".alias-item__meta");
-    const removeBtn = fragment.querySelector(".alias-remove-btn");
-
-    addressEl.textContent = address;
-    metaEl.textContent = address === state.activeAddress ? "현재 선택됨" : "이 메일함 보기";
-
-    if (address === state.activeAddress) {
-      item.classList.add("is-active");
-    }
-
-    mainBtn.addEventListener("click", async () => {
-      const localPart = address.split("@")[0] || "";
-      localPartInputEl.value = localPart;
-      updatePreview();
-      await activateCurrentInput();
-    });
-
-    removeBtn.addEventListener("click", async (event) => {
-      event.stopPropagation();
-      const confirmed = window.confirm("이 주소를 삭제할까요?");
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        await removeAlias(address);
-      } catch (error) {
-        setStatus(`주소 삭제에 실패했습니다: ${error.message}`, "error");
-      }
-    });
-
-    aliasListEl.appendChild(fragment);
-  });
-}
-
-function renderMessages() {
-  if (!state.activeAddress) {
-    messageListEl.className = "mail-list empty-state";
-    messageListEl.textContent = "상단에서 메일함을 선택하면 해당 주소로 온 메일이 표시됩니다.";
-    return;
-  }
-
-  if (!state.messages.length) {
-    messageListEl.className = "mail-list empty-state";
-    messageListEl.textContent = "아직 받은 메일이 없습니다. 이 주소로 테스트 메일을 보내보세요.";
-    return;
-  }
-
-  messageListEl.className = "mail-list";
-  messageListEl.innerHTML = "";
-
-  state.messages.forEach((message) => {
-    const fragment = messageItemTemplateEl.content.cloneNode(true);
-    const button = fragment.querySelector(".message-item");
-    const subjectEl = fragment.querySelector(".message-item__subject");
-    const timeEl = fragment.querySelector(".message-item__time");
-    const fromEl = fragment.querySelector(".message-item__from");
-    const introEl = fragment.querySelector(".message-item__intro");
-    const code = extractVerificationCode(message);
-
-    subjectEl.textContent = message.subject || "(제목 없음)";
-    if (code) {
-      const codeBadge = document.createElement("span");
-      codeBadge.className = "message-item__code";
-      codeBadge.textContent = code;
-      subjectEl.append(" ", codeBadge);
-    }
-    timeEl.textContent = formatDate(message.createdAt);
-    fromEl.textContent = `보낸 사람: ${message.from || "알 수 없음"}`;
-    introEl.textContent = message.intro || "미리보기가 없습니다.";
-
-    if (message.id === state.activeMessageId) {
-      button.classList.add("is-active");
-    }
-
-    button.addEventListener("click", () => openMessage(message.id));
-    messageListEl.appendChild(fragment);
-  });
-}
-
-function renderVerificationCodes() {
-  const items = getMessagesWithCodes();
-
-  if (!state.activeAddress) {
-    codeListEl.className = "code-list empty-state";
-    codeListEl.textContent = "상단에서 메일함을 선택하면 인증번호를 자동으로 찾습니다.";
-    return;
-  }
-
-  if (!items.length) {
-    codeListEl.className = "code-list empty-state";
-    codeListEl.textContent = "아직 인증번호가 감지된 메일이 없습니다.";
-    return;
-  }
-
-  codeListEl.className = "code-list";
-  codeListEl.innerHTML = "";
-
-  items.forEach(({ message, code }) => {
-    const fragment = codeItemTemplateEl.content.cloneNode(true);
-    const item = fragment.querySelector(".code-item");
-    const valueBtn = fragment.querySelector(".code-item__value");
-    const subjectEl = fragment.querySelector(".code-item__subject");
-    const metaEl = fragment.querySelector(".code-item__meta");
-    const openBtn = fragment.querySelector(".code-item__open");
-
-    if (message.id === state.activeMessageId) {
-      item.classList.add("is-active");
-    }
-
-    valueBtn.textContent = code;
-    subjectEl.textContent = message.subject || "(제목 없음)";
-    metaEl.textContent = `${message.from || "알 수 없음"} · ${formatDate(message.createdAt)}`;
-
-    valueBtn.addEventListener("click", async () => {
-      await copyText(code);
-      setStatus(`인증번호 ${code}를 복사했습니다.`, "connected");
-    });
-
-    openBtn.addEventListener("click", () => openMessage(message.id));
-    codeListEl.appendChild(fragment);
-  });
-}
-
-async function copyText(value) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(value);
-    return;
-  }
-
-  const textarea = document.createElement("textarea");
-  textarea.value = value;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand("copy");
-  textarea.remove();
-}
-
-function renderMessageDetail() {
-  if (!state.activeMessage) {
-    messageDetailEl.className = "detail-card empty-state";
-    messageDetailEl.textContent = "메일을 클릭하면 발신자, 제목, 본문, 첨부 파일이 여기에서 보입니다.";
-    return;
-  }
-
-  const message = state.activeMessage;
-  const code = extractVerificationCode(message);
-  messageDetailEl.className = "detail-card";
-  messageDetailEl.innerHTML = `
-    <div class="detail-header">
-      <h4 class="detail-title">${escapeHtml(message.subject || "(제목 없음)")}</h4>
-      ${code ? `<button type="button" class="detail-code" data-copy-code="${escapeHtml(code)}">${escapeHtml(code)}</button>` : ""}
-    </div>
-    <div class="detail-meta">
-      <div>보낸 사람: ${escapeHtml(message.from || "알 수 없음")}</div>
-      <div>받는 사람: ${escapeHtml((message.to || []).join(", ") || state.activeAddress)}</div>
-      <div>수신 시각: ${escapeHtml(formatDate(message.createdAt))}</div>
-      <div>메시지 ID: ${escapeHtml(message.messageId || "-")}</div>
-    </div>
-  `;
-
-  const codeButton = messageDetailEl.querySelector("[data-copy-code]");
-  if (codeButton) {
-    codeButton.addEventListener("click", async () => {
-      await copyText(codeButton.dataset.copyCode);
-      setStatus(`인증번호 ${codeButton.dataset.copyCode}를 복사했습니다.`, "connected");
-    });
-  }
-
-  const textBlock = document.createElement("section");
-  textBlock.className = "detail-block";
-  textBlock.innerHTML = "<strong>텍스트 본문</strong>";
-  const textPre = document.createElement("pre");
-  textPre.textContent = message.text || message.intro || "표시할 텍스트 본문이 없습니다.";
-  textBlock.appendChild(textPre);
-  messageDetailEl.appendChild(textBlock);
-
-  if (message.html) {
-    const htmlBlock = document.createElement("section");
-    htmlBlock.className = "html-preview";
-    htmlBlock.innerHTML = "<strong>HTML 미리보기</strong>";
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("sandbox", "allow-same-origin");
-    iframe.srcdoc = message.html;
-    htmlBlock.appendChild(iframe);
-    messageDetailEl.appendChild(htmlBlock);
-  }
-
-  if (Array.isArray(message.attachments) && message.attachments.length > 0) {
-    const attachmentBlock = document.createElement("section");
-    attachmentBlock.className = "detail-block";
-    attachmentBlock.innerHTML = "<strong>첨부 파일</strong>";
-
-    const list = document.createElement("div");
-    list.className = "attachment-list";
-
-    message.attachments.forEach((attachment) => {
-      const row = document.createElement("div");
-      row.className = "attachment-item";
-
-      const meta = document.createElement("div");
-      meta.innerHTML = `
-        <div class="attachment-item__name">${escapeHtml(attachment.filename || "unnamed")}</div>
-        <div class="attachment-item__meta">${escapeHtml(attachment.contentType || "unknown")} ${attachment.size ? `· ${attachment.size} bytes` : ""}</div>
-      `;
-
-      row.appendChild(meta);
-
-      if (attachment.downloadUrl) {
-        const link = document.createElement("a");
-        link.className = "attachment-link";
-        link.href = attachment.downloadUrl;
-        link.target = "_blank";
-        link.rel = "noreferrer";
-        link.textContent = "다운로드";
-        row.appendChild(link);
-      }
-
-      list.appendChild(row);
-    });
-
-    attachmentBlock.appendChild(list);
-    messageDetailEl.appendChild(attachmentBlock);
-  }
-}
-
-function renderInboxViews() {
-  renderMessages();
-  renderVerificationCodes();
-  renderStats();
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function normalizeAddress(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function applyAliases(aliases) {
-  state.aliases = Array.isArray(aliases) ? aliases.map(normalizeAddress).filter(Boolean) : [];
-  renderAliases();
-  renderStats();
-  renderSessionCard();
-}
-
-async function loadAliasesFromDb() {
-  const payload = await requestJson("/api/aliases");
-  applyAliases(payload.aliases || []);
-}
-
-async function addAlias(address) {
-  const normalized = normalizeAddress(address);
-  if (!normalized) {
-    return;
-  }
-
-  const payload = await requestJson("/api/aliases", {
-    method: "POST",
-    body: { address: normalized },
-  });
-  applyAliases(payload.aliases || []);
-}
-
-async function removeAlias(address) {
-  const normalized = normalizeAddress(address);
-  if (!normalized) {
-    return;
-  }
-
-  const payload = await requestJson(`/api/aliases?address=${encodeURIComponent(normalized)}`, {
-    method: "DELETE",
-  });
-  applyAliases(payload.aliases || []);
-
-  if (state.activeAddress === normalized) {
-    stopPolling();
-    state.activeAddress = "";
-    state.messages = [];
-    state.activeMessage = null;
-    state.activeMessageId = "";
-    localStorage.removeItem(STORAGE_KEYS.activeLocalPart);
-    localPartInputEl.value = "";
-    updatePreview();
-    renderCurrentInbox();
-    renderInboxViews();
-    renderMessageDetail();
-    setStatus("선택 중인 주소를 목록에서 삭제했습니다.", "idle");
-  }
-}
-
-function setActiveAddress(localPart) {
-  const sanitized = sanitizeLocalPart(localPart);
-  if (!sanitized) {
-    setStatus("메일 이름을 먼저 입력해주세요.", "error");
-    return false;
-  }
-
-  state.activeAddress = buildAddress(sanitized);
-  localStorage.setItem(STORAGE_KEYS.activeLocalPart, sanitized);
-  renderCurrentInbox();
-  renderSessionCard();
-  setStatus(`현재 주소를 ${state.activeAddress}로 설정했습니다.`, "connected");
-  return true;
-}
-
-async function loadMessages(showFeedback = true) {
-  if (!state.activeAddress) {
-    renderInboxViews();
-    return;
-  }
-
-  try {
-    const payload = await requestJson(`/api/messages?address=${encodeURIComponent(state.activeAddress)}`);
-    state.messages = Array.isArray(payload.messages) ? payload.messages : [];
-    renderInboxViews();
-
-    if (state.activeMessageId) {
-      const exists = state.messages.some((message) => message.id === state.activeMessageId);
-      if (!exists) {
-        state.activeMessageId = "";
-        state.activeMessage = null;
-      }
-    }
-
-    if (!state.activeMessageId && state.messages[0]) {
-      await openMessage(state.messages[0].id, false);
-    } else {
-      renderMessageDetail();
-    }
-
-    if (showFeedback) {
-      setStatus(`받은 메일 ${state.messages.length}개를 확인했습니다.`, "connected");
-    } else if (payload.warning) {
-      setStatus(`실시간 API 조회에 실패해 캐시를 보여줍니다. ${payload.warning}`, "idle");
-    }
-  } catch (error) {
-    setStatus(`메일 목록을 불러오지 못했습니다. ${error.message}`, "error");
-  }
-}
-
-async function openMessage(messageId, announce = true) {
-  if (!state.activeAddress || !messageId) {
-    return;
-  }
-
-  try {
-    state.activeMessageId = messageId;
-    renderInboxViews();
-    const payload = await requestJson(
-      `/api/messages/${encodeURIComponent(messageId)}?address=${encodeURIComponent(state.activeAddress)}`,
-    );
-    state.activeMessage = payload;
-    renderMessageDetail();
-    renderInboxViews();
-
-    if (announce) {
-      setStatus(`메일 1건을 열었습니다: ${payload.subject || "(제목 없음)"}`, "connected");
-    }
-  } catch (error) {
-    setStatus(`메일 상세를 불러오지 못했습니다. ${error.message}`, "error");
-  }
-}
-
-function startPolling() {
-  stopPolling();
-  state.poller = window.setInterval(() => {
-    loadMessages(false);
-  }, AUTO_REFRESH_MS);
-}
-
-function stopPolling() {
-  if (state.poller) {
-    window.clearInterval(state.poller);
-    state.poller = null;
-  }
-}
-
-async function activateCurrentInput() {
-  if (!setActiveAddress(localPartInputEl.value)) {
-    return;
-  }
-
-  try {
-    await addAlias(state.activeAddress);
-  } catch (error) {
-    setStatus(`주소 저장에 실패했습니다: ${error.message}`, "error");
-    return;
-  }
-
-  await loadMessages(true);
-  startPolling();
-}
-
-function bindEvents() {
-  document.querySelector("#activateInboxBtn").addEventListener("click", activateCurrentInput);
-  document.querySelector("#refreshBtn").addEventListener("click", () => loadMessages(true));
-
-  localPartInputEl.addEventListener("input", () => {
-    const sanitized = sanitizeLocalPart(localPartInputEl.value);
-    if (sanitized !== localPartInputEl.value) {
-      localPartInputEl.value = sanitized;
-    }
-    updatePreview();
-  });
-
-  localPartInputEl.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      activateCurrentInput();
-    }
-  });
-}
-
-async function init() {
-  bindEvents();
-  renderCurrentInbox();
-  renderSessionCard();
-  renderAliases();
-  renderInboxViews();
-  renderMessageDetail();
-  setStatus("백엔드 구성을 확인하는 중입니다.", "idle");
-
-  try {
-    state.config = await requestJson("/api/config");
-    previewDomainEl.textContent = `@${getInboxDomain()}`;
-    renderSessionCard();
-    renderStats();
-    updatePreview();
-
-    let aliasLoadError = "";
+  async function openMessage(id) {
+    const revision=state.revision, detailRevision=++state.detailRevision;
+    state.selected=id; renderMessages(); empty($('messageDetail'),'메일을 여는 중…','잠시 기다려 주세요.');
     try {
-      await loadAliasesFromDb();
-    } catch (error) {
-      aliasLoadError = error.message || "주소 목록을 불러오지 못했습니다.";
-      setStatus(`주소 목록을 불러오지 못했습니다. ${error.message}`, "error");
-    }
-
-    const savedLocalPart = sanitizeLocalPart(localStorage.getItem(STORAGE_KEYS.activeLocalPart) || "");
-    localPartInputEl.value = savedLocalPart || "";
-    updatePreview();
-    if (savedLocalPart) {
-      setActiveAddress(savedLocalPart);
-      try {
-        await addAlias(state.activeAddress);
-      } catch {
-        // 주소 선택은 유지하고 메일 조회를 계속 진행합니다.
+      const message=await request('/api/messages/'+encodeURIComponent(id));
+      if(revision!==state.revision || detailRevision!==state.detailRevision) return;
+      if(message.address!==state.mailbox?.address) return restore();
+      const target=$('messageDetail'); target.replaceChildren();
+      const title=document.createElement('h3'); title.textContent=message.subject;
+      const meta=document.createElement('p'); meta.className='detail-meta'; meta.textContent=message.from+' · '+formatDate(message.createdAt);
+      const body=document.createElement('pre'); body.textContent=message.text || '표시할 텍스트 본문이 없습니다. 이 무료 버전은 HTML 원문과 첨부파일을 열지 않습니다.';
+      target.append(title,meta,body);
+      const code=message.text?.match(/(?:인증(?:번호|코드)|verification code|passcode|OTP)[^\d]{0,30}(\d{4,8})\b/i)?.[1];
+      if(code) {
+        const copy=document.createElement('button');copy.type='button';copy.className='code-copy';copy.textContent='인증번호 '+code+' 복사';
+        copy.addEventListener('click',()=>copyText(code));target.insertBefore(copy,body);
       }
-      await loadMessages(false);
-      startPolling();
-    } else if (!aliasLoadError) {
-      setStatus("원하는 메일 이름을 입력하거나 저장된 메일을 선택하세요.", "idle");
-    }
-
-    if (!aliasLoadError && state.config.sourceMode === "webhook-cache") {
-      setStatus("RESEND_API_KEY가 없어 webhook 캐시 모드로 동작합니다.", "idle");
-    } else if (!aliasLoadError && !state.config.apiConfigured) {
-      setStatus("RESEND_API_KEY가 없어 메일 조회가 비활성화되어 있습니다.", "error");
-    }
-  } catch (error) {
-    setStatus(`앱 초기화에 실패했습니다: ${error.message}`, "error");
+    } catch(error) { if(revision===state.revision && detailRevision===state.detailRevision) { empty($('messageDetail'),'메일을 열지 못했습니다',error.message); if(error.status===401) {clearMailbox();status(error.message,true);} } }
   }
-}
-
-init();
+  async function loadMessages() {
+    if(!state.mailbox || state.busy || document.hidden) return;
+    const revision=state.revision, listRevision=++state.listRevision;
+    try {
+      const payload=await request('/api/messages');
+      if(revision!==state.revision || listRevision!==state.listRevision) return;
+      if(payload.address!==state.mailbox?.address) return restore();
+      state.messages=payload.partial?[...new Map([...state.messages,...payload.messages].map(m=>[m.id,m])).values()]:payload.messages;
+      state.messages.sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt));
+      state.failures=0; renderMessages();
+      status(payload.partial?'메일이 많아 일부 목록만 확인했습니다. 잠시 후 다시 새로고침해 주세요.':state.messages.length?'받은 메일을 확인했습니다.':'새 메일을 기다리고 있습니다.');
+    } catch(error) {
+      if(revision!==state.revision || listRevision!==state.listRevision) return;
+      state.failures++; if(error.status===401) clearMailbox();
+      status(error.message,true);
+    }
+  }
+  function schedule() {
+    clearTimeout(state.polling);
+    if(state.mailbox && !document.hidden) state.polling=setTimeout(async()=>{await loadMessages();schedule();},Math.min(20000*2**state.failures,120000));
+  }
+  function countdown() {
+    if(!state.mailbox) return;
+    const remaining=state.mailbox.expiresAt-Date.now();
+    if(remaining<=0) {clearMailbox();status('메일함 이용기간이 끝났습니다. 새 주소를 만들어 주세요.');return;}
+    const minutes=Math.ceil(remaining/60000);
+    $('expiryText').textContent='남은 시간 '+Math.floor(minutes/60)+'시간 '+minutes%60+'분';
+  }
+  function confirmAction(title) {
+    $('confirmTitle').textContent=title;
+    return new Promise(resolve=>{
+      const dialog=$('confirmDialog');
+      dialog.returnValue='';
+      dialog.addEventListener('close',()=>resolve(dialog.returnValue==='confirm'),{once:true});
+      dialog.showModal();
+    });
+  }
+  async function mutate(method) {
+    if(state.busy) return;
+    state.busy=true;state.revision++;clearTimeout(state.polling);controls();
+    try {
+      if(state.mailbox && !(await confirmAction(method==='DELETE'?'메일함을 닫을까요?':'새 주소를 만들까요?'))) return;
+      const payload=await request('/api/mailbox',method);
+      setMailbox(payload.mailbox);
+      status(payload.mailbox?'주소를 복사해 사용해 보세요.':'이 브라우저에서 메일함 접근 정보를 지웠습니다.');
+    } catch(error) {status(error.message,true);}
+    finally {state.busy=false;controls();await loadMessages();schedule();}
+  }
+  async function copyText(value) {
+    try {await navigator.clipboard.writeText(value);status('복사했습니다.');}
+    catch { $('emailAddress').focus();$('emailAddress').select();status('복사가 허용되지 않았습니다. 선택된 주소를 직접 복사해 주세요.',true); }
+  }
+  async function restore() {
+    if(state.busy) return;
+    const revision=++state.revision;
+    try {const payload=await request('/api/mailbox');if(revision!==state.revision || state.busy)return;setMailbox(payload.mailbox);status(payload.mailbox?'메일함을 다시 열었습니다.':'무료 주소 만들기를 눌러 시작하세요.');await loadMessages();schedule();}
+    catch(error) {if(revision===state.revision)status(error.message,true);}
+  }
+  $('createBtn').addEventListener('click',()=>mutate('POST'));
+  $('closeBtn').addEventListener('click',()=>mutate('DELETE'));
+  $('copyBtn').addEventListener('click',()=>state.mailbox && copyText(state.mailbox.address));
+  $('refreshBtn').addEventListener('click',async()=>{clearTimeout(state.polling);$('refreshBtn').disabled=true;await loadMessages();controls();schedule();});
+  document.addEventListener('visibilitychange',()=>{clearTimeout(state.polling);if(!document.hidden) restore();});
+  setInterval(countdown,1000);
+  request('/api/config').then(async config=>{if(config.apiConfigured){await restore();state.ready=true;controls();}else status('메일 수신 서비스를 준비 중입니다. 잠시 후 다시 방문해 주세요.');}).catch(error=>status(error.message,true));
+})();

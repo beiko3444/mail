@@ -1,0 +1,41 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+process.env.MAILBOX_SECRET = 'test-only-secret-'.repeat(4);
+process.env.RESEND_API_KEY = 'test-only-resend';
+const mailbox = require('../api/_lib/mailbox');
+
+test('random mailboxes are unique, signed, and expire after 24 hours', () => {
+  const first = mailbox.issueMailbox(1000000);
+  const second = mailbox.issueMailbox(1000000);
+  assert.notEqual(first.mailbox.address, second.mailbox.address);
+  assert.match(first.mailbox.address, /^[a-f0-9]{32}@inbox\.xtracker\.co\.kr$/);
+  assert.equal(first.mailbox.expiresAt - first.mailbox.createdAt, 86400000);
+  assert.deepEqual(mailbox.verifyToken(first.token, 1000001), first.mailbox);
+  assert.throws(() => mailbox.verifyToken(first.token, 1000000 + 86400000));
+});
+
+test('tampering with either payload or signature is rejected', () => {
+  const { token } = mailbox.issueMailbox();
+  const [payload, signature] = token.split('.');
+  const claims = JSON.parse(Buffer.from(payload, 'base64url'));
+  claims.address = 'victim@inbox.xtracker.co.kr';
+  assert.throws(() => mailbox.verifyToken(Buffer.from(JSON.stringify(claims)).toString('base64url') + '.' + signature));
+  assert.throws(() => mailbox.verifyToken(payload + '.wrong'));
+  assert.throws(() => mailbox.verifyToken('garbage'));
+});
+
+test('only cookie possession authorizes a mailbox; query addresses do not', () => {
+  assert.throws(() => mailbox.requireMailbox({ headers: {}, query: { address: 'victim@example.org' } }));
+  const first = mailbox.issueMailbox();
+  assert.equal(mailbox.requireMailbox({ headers: { cookie: `xtmail_session=${first.token}` } }).address, first.mailbox.address);
+});
+
+test('cross-site mutations rejected and mailbox cookies protected', () => {
+  assert.throws(() => mailbox.checkOrigin({ headers: { host: 'mail.example.org', origin: 'https://attacker.example', 'sec-fetch-site': 'cross-site' } }));
+  assert.doesNotThrow(() => mailbox.checkOrigin({ headers: { host: 'mail.example.org', origin: 'https://mail.example.org' } }));
+  const headers = {};
+  mailbox.setCookie({ headers: { host: 'mail.example.org' } }, { setHeader: (k,v) => headers[k] = v }, 'token');
+  assert.match(headers['Set-Cookie'], /HttpOnly/);
+  assert.match(headers['Set-Cookie'], /SameSite=Strict/);
+  assert.match(headers['Set-Cookie'], /Secure/);
+});

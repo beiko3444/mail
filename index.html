@@ -1,118 +1,16 @@
-<!doctype html>
-<html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Free Mail Forge</title>
-    <meta name="description" content="@inbox.xtracker.co.kr 수신 메일 확인 도구" />
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="app">
-      <header class="top">
-        <div>
-          <h1>메일 인증번호 확인</h1>
-          <p>@inbox.xtracker.co.kr 주소로 들어오는 메일과 인증번호를 바로 확인하세요.</p>
-        </div>
-        <button id="refreshBtn" class="icon-button" type="button" title="새로고침" aria-label="새로고침">↻</button>
-      </header>
-
-      <section class="card selector-card">
-        <div class="section-head selector-head">
-          <div>
-            <h2>메일함 선택</h2>
-            <p id="sessionCard" class="session-card">설정 확인 중</p>
-          </div>
-          <span id="connectionBadge" class="status-badge is-idle">대기</span>
-        </div>
-
-        <div class="selector-layout">
-          <div class="selector-current">
-            <span class="eyebrow">현재 보는 메일</span>
-            <p id="currentInbox" class="current-address">주소를 설정해보세요</p>
-            <p id="inboxHint" class="hint">메일 이름을 입력하거나 저장된 주소를 선택하세요.</p>
-            <p id="statusText" class="status-text">앱을 초기화하는 중입니다.</p>
-            <div class="stats-inline">
-              <span>상태 <strong id="modeLabel">-</strong></span>
-              <span>메일 <strong id="messageCount">0</strong></span>
-              <span>저장 주소 <strong id="aliasCount">0</strong></span>
-            </div>
-          </div>
-
-          <div class="selector-add">
-            <label class="field">
-              <span>메일 추가</span>
-              <input id="localPartInput" type="text" placeholder="예: minako, support" maxlength="32" autocomplete="off" />
-            </label>
-            <p class="preview">
-              <strong id="previewLocal">your-alias</strong><span id="previewDomain">@inbox.xtracker.co.kr</span>
-            </p>
-            <button id="activateInboxBtn" class="primary-button" type="button">주소 추가하고 보기</button>
-          </div>
-        </div>
-
-        <div class="saved-mailboxes">
-          <div class="saved-mailboxes__title">저장된 메일</div>
-          <div id="aliasList" class="empty-state">저장한 주소가 아직 없습니다.</div>
-        </div>
-      </section>
-
-      <section class="workspace-grid">
-        <article class="card panel-tall">
-          <div class="section-head">
-            <h2>받은 메일</h2>
-            <span id="messageCountPill" class="pill">0개</span>
-          </div>
-          <div id="messageList" class="empty-state">주소를 선택하면 해당 주소로 온 메일이 표시됩니다.</div>
-        </article>
-
-        <article class="card panel-tall">
-          <div class="section-head">
-            <h2>인증번호</h2>
-            <span id="codeCountPill" class="pill">0개</span>
-          </div>
-          <div id="codeList" class="empty-state">메일에서 찾은 인증번호가 여기에 바로 표시됩니다.</div>
-        </article>
-      </section>
-
-      <section class="card">
-        <h2>메일 상세</h2>
-        <div id="messageDetail" class="empty-state">메일을 클릭하면 내용이 표시됩니다.</div>
-      </section>
-    </main>
-
-    <template id="messageItemTemplate">
-      <button type="button" class="message-item">
-        <div class="message-item__head">
-          <strong class="message-item__subject"></strong>
-          <span class="message-item__time"></span>
-        </div>
-        <span class="message-item__from"></span>
-        <p class="message-item__intro"></p>
-      </button>
-    </template>
-
-    <template id="codeItemTemplate">
-      <article class="code-item">
-        <div>
-          <button type="button" class="code-item__value" title="인증번호 복사"></button>
-          <p class="code-item__subject"></p>
-          <span class="code-item__meta"></span>
-        </div>
-        <button type="button" class="code-item__open">메일 보기</button>
-      </article>
-    </template>
-
-    <template id="aliasItemTemplate">
-      <article class="alias-item">
-        <button type="button" class="alias-main">
-          <strong class="alias-item__address"></strong>
-          <span class="alias-item__meta"></span>
-        </button>
-        <button type="button" class="alias-remove-btn">삭제</button>
-      </article>
-    </template>
-
-    <script src="./app.js"></script>
-  </body>
-</html>
+<main id="main" class="container app-main">
+  <section class="mail-hero" aria-labelledby="mail-title">
+    <div class="hero-heading"><div><span class="eyebrow">FREE TEMPORARY EMAIL</span><h1 id="mail-title">잠깐 필요한 메일,<br>간편하게.</h1><p>가입 없이 만드는 무료 임시 이메일.</p></div><span class="free-label">항상 무료</span></div>
+    <div class="address-box"><label for="emailAddress">내 임시 이메일 주소</label><div class="address-line"><input id="emailAddress" readonly value="" placeholder="주소를 만들어 시작하세요" aria-describedby="statusText"><button id="copyBtn" class="copy-button" type="button" disabled>주소 복사</button></div></div>
+    <div class="mail-actions"><button id="createBtn" class="button button-lime" type="button" disabled>무료 주소 만들기 <span aria-hidden="true">↗</span></button><button id="refreshBtn" class="button button-outline" type="button" disabled><span aria-hidden="true">↻</span> 새로고침</button><button id="closeBtn" class="text-button" type="button" disabled>메일함 닫기</button><span id="expiryText" class="expiry">주소 발급 후 24시간 이용</span></div>
+    <p id="statusText" class="live-status" role="status" aria-live="polite">메일 서비스를 확인하고 있습니다.</p>
+  </section>
+  <div class="mail-notice"><span class="notice-dot" aria-hidden="true"></span><p>이 브라우저에서만 메일함이 유지됩니다. 새 주소를 만들거나 쿠키를 지우면 기존 메일함을 다시 열 수 없습니다. <a href="/privacy/#retention">메일 보관 안내</a></p></div>
+  <section class="inbox-workspace" aria-label="메일 수신함">
+    <div class="inbox-list-panel"><div class="panel-heading"><h2>받은편지함</h2><span id="messageCount" class="count-badge">0</span></div><p class="auto-refresh">열어 둔 동안 20초마다 새 메일을 확인합니다.</p><div id="messageList" class="message-list"><div class="empty-state"><span class="empty-icon" aria-hidden="true">✉</span><h3>아직 메일이 없어요</h3><p>임시주소를 만든 뒤 필요한 곳에<br>입력하면 여기에 메일이 도착합니다.</p></div></div></div>
+    <div class="detail-panel"><div class="panel-heading"><h2>메일 내용</h2><span class="subtle-label">텍스트로 안전하게 보기</span></div><div id="messageDetail" class="message-detail"><div class="empty-state"><h3>메일을 선택해 주세요</h3><p>보낸 사람과 본문을 확인할 수 있어요.<br>외부 이미지와 스크립트는 불러오지 않습니다.</p></div></div></div>
+  </section>
+  <section class="quick-help"><div><span class="eyebrow ink">BEFORE YOU START</span><h2>가볍게 쓰고,<br>중요한 계정은 따로.</h2></div><div class="quick-help-copy"><p>한 번 확인하고 끝나는 테스트 메일이나, 기본 메일 주소를 공유하고 싶지 않을 때 사용해 보세요. 금융·결제·비밀번호 복구처럼 오래 유지해야 하는 계정에는 일반 이메일을 사용해 주세요.</p><a class="inline-link" href="/guides/">임시메일 이용 가이드 <span aria-hidden="true">↗</span></a><a class="inline-link" href="/faq/">메일이 도착하지 않나요? <span aria-hidden="true">↗</span></a></div></section>
+  <dialog id="confirmDialog" aria-labelledby="confirmTitle"><form method="dialog"><h2 id="confirmTitle">새 주소를 만들까요?</h2><p id="confirmText">기존 메일함의 접근 정보가 이 브라우저에서 사라집니다. 수신 업체에 보관된 원본 메일까지 즉시 삭제되는 것은 아닙니다.</p><div class="dialog-actions"><button class="button button-light" value="cancel">취소</button><button id="confirmAction" class="button button-dark" value="confirm">계속</button></div></form></dialog>
+</main>
+<script src="/app.js" defer></script>
