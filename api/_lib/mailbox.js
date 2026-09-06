@@ -3,7 +3,6 @@ const TTL = 86400000;
 const COOKIE = 'xtmail_session';
 const creationWindows = new Map();
 const issuedAddresses = new Map();
-const WORDS = ['amber','apple','bloom','cedar','cloud','coral','daisy','dawn','ember','field','flame','forest','fox','glow','harbor','hazel','ivory','lake','lemon','lunar','maple','meadow','mint','mist','moss','ocean','olive','pearl','pine','plum','river','rose','sage','shell','sky','solar','stone','sunny','tiger','violet','wave','willow','wind'];
 function receiver() {
   if (process.env.MAIL_RECEIVER) return process.env.MAIL_RECEIVER === 'cloudflare' ? 'cloudflare' : 'resend';
   return process.env.CLOUDFLARE_EMAIL_WEBHOOK_SECRET ? 'cloudflare' : 'resend';
@@ -28,9 +27,8 @@ function secret() {
   return createHmac('sha256', key).update('xtmail:mailbox:v1').digest();
 }
 function signature(payload) { return createHmac('sha256', secret()).update(payload).digest(); }
-function randomWord() { return WORDS[randomInt(WORDS.length)]; }
-function mailboxLocalPart() { return `${randomWord()}${randomWord()}${randomWord()}`; }
-function isMailboxAddress(address) { return /^[a-z]{9,18}@[a-z0-9.-]+$/.test(address || ''); }
+function mailboxLocalPart() { return Array.from({ length: 5 }, () => String.fromCharCode(97 + randomInt(26))).join('') + String(randomInt(100000)).padStart(5, '0'); }
+function isMailboxAddress(address) { return /^(?:[a-z]{5}[0-9]{5}|[a-z]{9,18})@[a-z0-9.-]+$/.test(address || ''); }
 function issueMailbox(now = Date.now()) {
   const domain = inboxDomain();
   if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) throw failure('메일 서비스를 준비 중입니다.', 503);

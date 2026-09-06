@@ -40,9 +40,11 @@ create index mail_messages_recipient_received_at_idx on public.mail_messages (re
 4. Vercel에 같은 값을 `CLOUDFLARE_EMAIL_WEBHOOK_SECRET`으로, `MAIL_RECEIVER=cloudflare`, `MAILBOX_SECRET`, `MESSAGES_SUPABASE_TABLE=mail_messages`와 함께 저장합니다.
 5. Cloudflare Email Service에서 `haruemail.com`을 온보딩하고 MX/SPF/DKIM 레코드를 추가한 뒤, Catch-all 규칙의 대상을 이 Worker로 지정합니다.
 
+Cloudflare 수신 도메인은 `CLOUDFLARE_INBOX_DOMAIN`으로 지정합니다. 운영 신규 주소는 `qiromi.com`을 사용하며, 이 도메인의 Catch-all 규칙도 `haruemail-incoming` Worker로 연결합니다. 웹사이트 주소는 `www.haruemail.com`을 유지합니다.
+
 ## 메일함 접근
 
-- 서버가 짧은 단어 세 개를 무작위로 붙인 주소를 발급합니다. 수신 주소 이름을 임의 선택하거나 기존 주소를 주소만으로 열 수 없습니다.
+- 서버가 영문 소문자 5자와 숫자 5자를 무작위로 조합한 주소를 발급합니다. 수신 주소 이름을 임의 선택하거나 기존 주소를 주소만으로 열 수 없습니다.
 - HttpOnly / SameSite=Strict / HTTPS Secure 쿠키가 서명된 메일함 접근 정보를 보관합니다. 발급 후 24시간 유효하며 토큰은 URL에 포함하지 않습니다.
 - MAILBOX_SECRET을 별도로 설정하는 것을 권장합니다. 없으면 기존 RESEND_API_KEY로부터 도메인을 분리한 HMAC 키를 유도합니다. 두 키를 바꾸면 기존 세션이 무효화될 수 있습니다.
 - 새 주소 또는 닫기는 현재 브라우저의 쿠키를 교체/제거합니다. 복사된 이전 토큰을 즉시 취소하는 서버측 폐기 목록은 없으므로 원래 기한까지 유효할 수 있습니다. Resend 원본 메일 삭제를 의미하지 않습니다.
