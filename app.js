@@ -68,15 +68,17 @@
     clearTimeout(mailboxIssuedTimeout);
     mailboxCard.classList.remove('mailbox-issued');
     void mailboxCard.offsetWidth;
-    const clear = () => {
+    const clear = event => {
+      if (event && event.target !== mailboxCard) return;
       if (mailboxIssuedClear !== clear) return;
       clearTimeout(mailboxIssuedTimeout);
+      mailboxCard.removeEventListener('animationend', clear);
       mailboxCard.classList.remove('mailbox-issued');
       mailboxIssuedClear = undefined;
     };
     mailboxIssuedClear = clear;
     mailboxCard.classList.add('mailbox-issued');
-    mailboxCard.addEventListener('animationend', clear, { once: true });
+    mailboxCard.addEventListener('animationend', clear);
     mailboxIssuedTimeout = setTimeout(clear, 1200);
   }
   function renderMessages() {

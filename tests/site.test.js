@@ -9,9 +9,16 @@ test('mailbox issuance celebration adds and clears its completion state', () => 
   const celebration = app.match(/function celebrateMailbox\(\) \{([\s\S]*?)\n  \}/)?.[1];
   assert.ok(celebration, 'celebrateMailbox() should exist');
   assert.match(celebration, /mailboxCard\.classList\.add\('mailbox-issued'\)/);
-  assert.match(celebration, /mailboxCard\.addEventListener\('animationend', clear, \{ once: true \}\)/);
-  assert.match(celebration, /const clear = \(\) => \{[^]*?mailboxCard\.classList\.remove\('mailbox-issued'\)/);
+  assert.match(celebration, /const clear = event => \{[^]*?if \(event && event\.target !== mailboxCard\) return;[^]*?mailboxCard\.classList\.remove\('mailbox-issued'\)/);
+  assert.match(celebration, /mailboxCard\.addEventListener\('animationend', clear\)/);
+  assert.match(celebration, /mailboxCard\.removeEventListener\('animationend', clear\)/);
   assert.match(celebration, /setTimeout\(clear, 1200\)/);
+
+  const mutate = app.match(/async function mutate\(method\) \{([\s\S]*?)\n  \}/)?.[1];
+  assert.ok(mutate, 'mutate() should exist');
+  assert.match(mutate, /const payload = await request\('\/api\/mailbox', method\);\s*setMailbox\(payload\.mailbox\);\s*if \(method === 'POST'\) celebrateMailbox\(\);/);
+  assert.doesNotMatch(app.match(/async function restore\(\) \{([\s\S]*?)\n  \}/)?.[1] || '', /celebrateMailbox\(/);
+  assert.equal((app.match(/celebrateMailbox\(\)/g) || []).length, 2, 'celebration should only be defined and invoked once');
 });
 test('public build is crawlable, linked, and never ships API source or secrets', () => {
   execFileSync(process.execPath,['scripts/build.js'],{cwd:root});
