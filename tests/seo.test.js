@@ -12,7 +12,7 @@ test('public SEO metadata, structured data, discovery and anchors agree',()=>{
  const home=read('index.html');
  assert.match(home,/<title>하루메일 \| 무료 임시메일·일회용 이메일<\/title>/);
  const websites=schemas(home).filter(s=>s['@type']==='WebSite');
- assert.equal(websites.length,1);assert.equal(websites[0].name,'하루메일');assert.equal(websites[0].url,'https://xtmail.vercel.app/');
+ assert.equal(websites.length,1);assert.equal(websites[0].name,'하루메일');assert.equal(websites[0].url,'https://www.haruemail.com/');
  assert.doesNotMatch(home,/name="google-site-verification"/);
  assert.match(home,/<div[^>]*data-nosnippet[^>]*>[\s\S]*id="emailAddress"/);
  assert.match(home,/<div[^>]*data-nosnippet[^>]*>[\s\S]*id="messageList"/);

@@ -42,7 +42,7 @@ test('public build is crawlable, linked, and never ships API source or secrets',
   assert.doesNotMatch(inbox,/adsbygoogle|googlesyndication|data-ad-slot/);
   for (const p of ['.env','api','server.js','data','tests','site.config.json']) assert.equal(fs.existsSync(path.join(dist,p)),false,p);
   const sitemap = fs.readFileSync(path.join(dist,'sitemap.xml'),'utf8');
-  assert.match(sitemap,/<loc>https:\/\/xtmail.vercel.app\/guides\//);
+  assert.match(sitemap,/<loc>https:\/\/www.haruemail.com\/guides\//);
   assert.doesNotMatch(sitemap,/\/api\//);
   const files = fs.readdirSync(dist,{recursive:true}).filter(p=>p.endsWith('.html'));
   assert.ok(files.length >= 12);

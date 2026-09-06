@@ -1,5 +1,5 @@
 const { json, methodNotAllowed } = require('./_lib/http');
-const { issueMailbox, requireMailbox, setCookie, checkOrigin, limitCreation } = require('./_lib/mailbox');
+const { issueMailbox, requireMailbox, setCookie, checkOrigin, limitCreation, receivingConfigured } = require('./_lib/mailbox');
 module.exports = async (req, res) => {
   try {
     if (req.method === 'GET') {
@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
     }
     if (req.method === 'POST') {
       checkOrigin(req);
-      if (!process.env.RESEND_API_KEY) return json(res, 503, { error: '메일 수신 서비스를 준비 중입니다. 잠시 후 다시 방문해 주세요.' });
+      if (!receivingConfigured()) return json(res, 503, { error: '메일 수신 서비스를 준비 중입니다. 잠시 후 다시 방문해 주세요.' });
       limitCreation(req);
       const { mailbox, token } = issueMailbox();
       setCookie(req, res, token);

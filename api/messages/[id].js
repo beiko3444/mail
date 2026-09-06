@@ -1,13 +1,14 @@
 const { json, methodNotAllowed, getSingleQuery } = require('../_lib/http');
-const { requireMailbox, belongsToMailbox } = require('../_lib/mailbox');
-const { getReceivedMessage } = require('../_lib/resend');
+const { requireMailbox, belongsToMailbox, receiver } = require('../_lib/mailbox');
+const resend = require('../_lib/resend');
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return methodNotAllowed(req, res, ['GET']);
   try {
     const mailbox = requireMailbox(req);
     const id = getSingleQuery(req.query?.id);
     if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) return json(res, 400, { error: '올바르지 않은 메일입니다.' });
-    const message = await getReceivedMessage(id);
+    const provider = receiver() === 'cloudflare' ? require('../_lib/messages-store') : resend;
+    const message = await provider.getReceivedMessage(id);
     requireMailbox(req);
     if (!belongsToMailbox(message, mailbox)) return json(res, 404, { error: '메일을 찾을 수 없습니다.' });
     const { from, subject, text, createdAt } = message;

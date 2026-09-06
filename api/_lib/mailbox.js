@@ -4,6 +4,11 @@ const COOKIE = 'xtmail_session';
 const creationWindows = new Map();
 const issuedAddresses = new Map();
 const WORDS = ['amber','apple','bloom','cedar','cloud','coral','daisy','dawn','ember','field','flame','forest','fox','glow','harbor','hazel','ivory','lake','lemon','lunar','maple','meadow','mint','mist','moss','ocean','olive','pearl','pine','plum','river','rose','sage','shell','sky','solar','stone','sunny','tiger','violet','wave','willow','wind'];
+function receiver() { return process.env.MAIL_RECEIVER === 'cloudflare' ? 'cloudflare' : 'resend'; }
+function receivingConfigured() {
+  if (receiver() === 'resend') return Boolean(process.env.RESEND_API_KEY);
+  return Boolean(process.env.MAILBOX_SECRET && require('./messages-store').isConfigured());
+}
 function failure(message, status = 401) { return Object.assign(new Error(message), { status }); }
 function secret() {
   const key = process.env.MAILBOX_SECRET || process.env.RESEND_API_KEY;
@@ -15,7 +20,7 @@ function randomWord() { return WORDS[randomInt(WORDS.length)]; }
 function mailboxLocalPart() { return `${randomWord()}${randomWord()}${randomWord()}`; }
 function isMailboxAddress(address) { return /^[a-z]{9,18}@[a-z0-9.-]+$/.test(address || ''); }
 function issueMailbox(now = Date.now()) {
-  const domain = process.env.INBOX_DOMAIN || 'inbox.xtracker.co.kr';
+  const domain = process.env.INBOX_DOMAIN || 'haruemail.com';
   if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) throw failure('메일 서비스를 준비 중입니다.', 503);
   for (const [address, expiresAt] of issuedAddresses) if (expiresAt <= now) issuedAddresses.delete(address);
   let address;
@@ -93,4 +98,4 @@ function belongsToMailbox(message, mailbox) {
   const time = Date.parse(message.createdAt);
   return [...(message.to || []), ...(message.cc || []), ...(message.bcc || [])].some(value => value.toLowerCase() === mailbox.address) && Number.isFinite(time) && time >= mailbox.createdAt - 5000 && time < mailbox.expiresAt;
 }
-module.exports = { issueMailbox, verifyToken, requireMailbox, setCookie, checkOrigin, limitCreation, belongsToMailbox, failure, issueScanCursor, verifyScanCursor };
+module.exports = { issueMailbox, verifyToken, requireMailbox, setCookie, checkOrigin, limitCreation, belongsToMailbox, failure, issueScanCursor, verifyScanCursor, receiver, receivingConfigured };

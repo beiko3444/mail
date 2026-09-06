@@ -1,4 +1,5 @@
 const { json, methodNotAllowed } = require("./_lib/http");
+const { receivingConfigured, receiver } = require('./_lib/mailbox');
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
@@ -9,6 +10,7 @@ module.exports = async function handler(req, res) {
   json(res, 200, {
     ok: true,
     runtime: "vercel-function",
-    apiConfigured: Boolean(process.env.RESEND_API_KEY),
+    apiConfigured: receivingConfigured(),
+    receiver: receiver(),
   });
 };

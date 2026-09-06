@@ -1,12 +1,13 @@
 const { json, methodNotAllowed } = require('../_lib/http');
-const { requireMailbox, belongsToMailbox, issueScanCursor, verifyScanCursor } = require('../_lib/mailbox');
-const { listReceivedMessages } = require('../_lib/resend');
+const { requireMailbox, belongsToMailbox, issueScanCursor, verifyScanCursor, receiver } = require('../_lib/mailbox');
+const resend = require('../_lib/resend');
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return methodNotAllowed(req, res, ['GET']);
   try {
     const mailbox = requireMailbox(req);
     const after = verifyScanCursor(req.query?.cursor, mailbox);
-    const result = await listReceivedMessages(mailbox.address, mailbox.createdAt, after);
+    const provider = receiver() === 'cloudflare' ? require('../_lib/messages-store') : resend;
+    const result = await provider.listReceivedMessages(mailbox.address, mailbox.createdAt, after);
     requireMailbox(req);
     const messages = result.messages.filter(message => belongsToMailbox(message, mailbox)).map(({id, from, subject, createdAt}) => ({id, from, subject, createdAt}));
     json(res, 200, { messages, address: mailbox.address, partial: result.partial, nextCursor: result.nextAfter ? issueScanCursor(result.nextAfter, mailbox) : null });

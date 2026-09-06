@@ -15,7 +15,30 @@ npm test
 npm run build
 ```
 
-실제 수신에는 기존 수신 도메인의 Resend 설정과 수신 권한을 가진 RESEND_API_KEY가 필요합니다. 비밀키는 .env 또는 호스팅 환경변수에만 넣으세요. 키가 없으면 주소를 발급하지 않고 준비 중 안내를 표시합니다. 테스트는 격리된 가상 제공자 응답을 사용하며 실제 메일을 보내지 않습니다.
+기본 수신 제공자는 Resend입니다. `MAIL_RECEIVER=cloudflare`로 바꾸면 `cloudflare-email-worker`가 Cloudflare Email Routing의 수신 메일을 Vercel 저장 엔드포인트로 전달하고, 사이트는 Supabase에서 메일을 읽습니다. 설정이 완성되기 전에는 제공자 값을 바꾸지 마세요. 테스트는 격리된 가상 제공자 응답을 사용하며 실제 메일을 보내지 않습니다.
+
+## Cloudflare 수신 전환
+
+`haruemail.com`이 Cloudflare DNS에서 활성화된 뒤 다음을 설정합니다.
+
+1. Supabase SQL Editor에서 테이블을 만듭니다.
+
+```sql
+create table public.mail_messages (
+  id text primary key,
+  recipient text not null,
+  from_address text not null default '',
+  subject text not null default '',
+  text text not null default '',
+  received_at timestamptz not null default now()
+);
+create index mail_messages_recipient_received_at_idx on public.mail_messages (recipient, received_at desc);
+```
+
+2. `cloudflare-email-worker`에서 `npm install` 후 `npx wrangler deploy`로 `haruemail-incoming` Worker를 배포합니다.
+3. Worker 변수 `INGEST_URL`에는 `https://www.haruemail.com/api/webhooks/cloudflare-email`, 비밀값 `INGEST_SECRET`에는 길고 임의의 값을 설정합니다.
+4. Vercel에 같은 값을 `CLOUDFLARE_EMAIL_WEBHOOK_SECRET`으로, `MAIL_RECEIVER=cloudflare`, `MAILBOX_SECRET`, `MESSAGES_SUPABASE_TABLE=mail_messages`와 함께 저장합니다.
+5. Cloudflare Email Service에서 `haruemail.com`을 온보딩하고 MX/SPF/DKIM 레코드를 추가한 뒤, Catch-all 규칙의 대상을 이 Worker로 지정합니다.
 
 ## 메일함 접근
 
