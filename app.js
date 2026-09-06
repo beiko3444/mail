@@ -2,6 +2,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const state = { mailbox: null, messages: [], nextCursor: null, revision: 0, detailRevision: 0, detailLoading: false, listRevision: 0, busy: false, ready: false, booting: false, polling: null, failures: 0, selected: '', rendered: '', buttons: new Map(), retry: 'initialize' };
+  let mailboxIssuedTimeout, mailboxIssuedClear;
   const formatDate = value => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? '수신 시각 없음' : new Intl.DateTimeFormat('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
@@ -61,6 +62,23 @@
     $('copyLabel').textContent = '주소 복사';
   }
   function setMailbox(mailbox) { clearMailbox(); state.mailbox = mailbox; controls(); renderMessages(); countdown(); }
+  function celebrateMailbox() {
+    const mailboxCard = $('mailboxCard');
+    if (mailboxIssuedClear) mailboxCard.removeEventListener('animationend', mailboxIssuedClear);
+    clearTimeout(mailboxIssuedTimeout);
+    mailboxCard.classList.remove('mailbox-issued');
+    void mailboxCard.offsetWidth;
+    const clear = () => {
+      if (mailboxIssuedClear !== clear) return;
+      clearTimeout(mailboxIssuedTimeout);
+      mailboxCard.classList.remove('mailbox-issued');
+      mailboxIssuedClear = undefined;
+    };
+    mailboxIssuedClear = clear;
+    mailboxCard.classList.add('mailbox-issued');
+    mailboxCard.addEventListener('animationend', clear, { once: true });
+    mailboxIssuedTimeout = setTimeout(clear, 1200);
+  }
   function renderMessages() {
     $('messageCount').textContent = String(state.messages.length);
     const fingerprint = JSON.stringify([Boolean(state.mailbox), state.selected, state.messages]);
@@ -174,6 +192,7 @@
       if (state.mailbox && !(await confirmAction(method))) return;
       const payload = await request('/api/mailbox', method);
       setMailbox(payload.mailbox);
+      if (method === 'POST') celebrateMailbox();
       status(payload.mailbox ? '내 임시 이메일이 준비됐어요. 주소를 복사해 보세요.' : '메일함을 닫았어요. 필요할 때 새 주소를 만들 수 있어요.');
     } catch (error) { state.retry = 'restore'; status(error.message, true); }
     finally {

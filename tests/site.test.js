@@ -4,6 +4,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const root = path.join(__dirname,'..');
+test('mailbox issuance celebration adds and clears its completion state', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const celebration = app.match(/function celebrateMailbox\(\) \{([\s\S]*?)\n  \}/)?.[1];
+  assert.ok(celebration, 'celebrateMailbox() should exist');
+  assert.match(celebration, /mailboxCard\.classList\.add\('mailbox-issued'\)/);
+  assert.match(celebration, /mailboxCard\.addEventListener\('animationend', clear, \{ once: true \}\)/);
+  assert.match(celebration, /const clear = \(\) => \{[^]*?mailboxCard\.classList\.remove\('mailbox-issued'\)/);
+  assert.match(celebration, /setTimeout\(clear, 1200\)/);
+});
 test('public build is crawlable, linked, and never ships API source or secrets', () => {
   execFileSync(process.execPath,['scripts/build.js'],{cwd:root});
   const dist = path.join(root,'dist');
