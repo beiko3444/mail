@@ -38,8 +38,6 @@ function layout(title,description,body,route,type='page',extra='') {
   const nodes=[{'@type':'Organization','@id':config.origin+'/#organization',name:config.name,url:config.origin+'/about/'},{'@type':'WebPage','@id':config.origin+route+'#webpage',url:config.origin+route,name:fullTitle,description,inLanguage:'ko-KR'}];
   if(route==='/')nodes.push({'@type':'WebSite','@id':config.origin+'/#website',name:config.name,url:config.origin+'/',inLanguage:'ko-KR',publisher:{'@id':config.origin+'/#organization'}});
   const ads=type==='guide' && canShowAds(route,config.ads);
-  const nav=[['/','받은편지함','inbox'],['/guides/','이용 가이드','book'],['/faq/','자주 묻는 질문','help']];
-  const current=p=>p==='/'?route==='/':route.startsWith(p);
   return `<!doctype html>
 <html lang="ko">
 <head>
@@ -67,7 +65,7 @@ ${extra}
 </head>
 <body data-page-type="${type}">
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
-<header class="site-header"><div class="header-inner"><a class="brand" href="/" aria-label="${escape(config.name)} 홈"><span class="brand-mark">${icon('mail')}</span>${escape(config.name)}</a><p class="brand-description">가볍게 쓰는 하루의 메일</p><span class="nav-label">나의 메일</span><nav class="site-nav" aria-label="주 메뉴">${nav.map(([p,n,i])=>`<a href="${p}"${current(p)?' aria-current="page"':''}>${icon(i)}<span>${n}</span><span class="nav-dot" aria-hidden="true"></span></a>`).join('')}</nav><div class="sidebar-bottom"><a href="/contact/">${icon('chat')}문의 및 도움말</a><div class="sidebar-note"><strong>잠깐 필요할 때, 하루메일</strong><br>가입 없이 무료로 사용하세요.</div></div></div></header>
+<header class="site-header"><div class="header-inner"><a class="brand" href="/" aria-label="${escape(config.name)} 홈"><span class="brand-mark">${icon('mail')}</span>${escape(config.name)}</a><nav class="header-links" aria-label="주 메뉴"><a href="/guides/">이용 가이드</a><a href="/faq/">자주 묻는 질문</a></nav></div></header>
 <div class="site-body">
 ${body}
 <footer class="site-footer"><div class="container"><div class="footer-top"><a href="/" class="footer-brand">${escape(config.name)}</a><nav class="footer-links" aria-label="서비스 안내"><a href="/about/">서비스 소개</a><a href="/contact/">문의</a><a href="/privacy/">개인정보처리방침</a><a href="/terms/">이용약관</a></nav></div><p class="footer-bottom">© 2026 ${escape(config.name)} · 필요한 순간, 가볍게 쓰는 무료 임시 이메일</p></div></footer>

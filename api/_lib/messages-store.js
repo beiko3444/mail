@@ -1,5 +1,6 @@
 const crypto = require('node:crypto');
 const { decodeWords } = require('postal-mime');
+const { readableMailText } = require('./mail-text');
 
 function config() {
   const url = String(process.env.SUPABASE_URL || process.env.ALIASES_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim().replace(/\/+$/, '');
@@ -41,7 +42,7 @@ function normalize(row) {
     to: [String(row.recipient || '').toLowerCase()],
     cc: [], bcc: [],
     subject: decodeWords(String(row.subject || '(제목 없음)')),
-    text: String(row.text || ''),
+    text: readableMailText(row.text),
     createdAt: row.received_at || row.created_at || ''
   };
 }

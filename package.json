@@ -12,6 +12,7 @@
     "test": "node scripts/build.js && node --test --test-concurrency=1 tests/*.test.js"
   },
   "dependencies": {
+    "html-to-text": "^10.0.1",
     "postal-mime": "^3.0.0"
   }
 }

@@ -1,3 +1,4 @@
+/* Centered mail workspace */
 :root{
   --ink:#172033;--muted:#667085;--faint:#98a2b3;--blue:#2563eb;--blue-hover:#1d4ed8;--blue-soft:#eff6ff;
   --violet:#475569;--line:#e4e7ec;--paper:#f8fafc;--white:#fff;--green:#039855;--radius:14px;
@@ -136,5 +137,72 @@ dialog::backdrop{background:#16284866;backdrop-filter:blur(3px)}dialog h2{font-s
 }
 @media(prefers-reduced-motion:no-preference){a,button{transition:background-color .16s,color .16s,box-shadow .16s}.mailbox-card{transition:border-color .2s,box-shadow .2s}.mailbox-card.mailbox-issued{animation:mailbox-arrival .78s cubic-bezier(.2,.8,.25,1)}.mailbox-card.mailbox-issued .address-box{animation:address-reveal .38s .09s both cubic-bezier(.2,.8,.25,1)}.mailbox-card.mailbox-issued .copy-button{animation:copy-pulse .44s .25s both ease-out}dialog[open]{animation:appear .15s ease-out}@keyframes mailbox-arrival{0%{border-color:#bfcdfb;box-shadow:0 20px 55px #35497912,0 0 0 0 #5369e500;transform:translateY(0)}45%{border-color:#7894f3;box-shadow:0 24px 64px #3549791d,0 0 0 6px #5369e51c;transform:translateY(-2px)}100%{border-color:#dce4f7;box-shadow:0 20px 55px #35497912,0 2px 8px #35497908;transform:translateY(0)}}@keyframes address-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes copy-pulse{0%{transform:scale(1);box-shadow:0 7px 15px #3159dc24}50%{transform:scale(1.035);box-shadow:0 10px 24px #3159dc45}100%{transform:scale(1);box-shadow:0 7px 15px #3159dc24}}@keyframes appear{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}}
 @media(prefers-reduced-motion:reduce){.mailbox-card.mailbox-issued,.mailbox-card.mailbox-issued .address-box,.mailbox-card.mailbox-issued .copy-button{animation:none!important}}
+
+/* A single central axis: address first, inbox second, reference material last. */
+body::before{display:none}
+.site-header{position:static;inset:auto;width:100%;border:0;border-bottom:1px solid var(--line);background:#fff}
+.header-inner{width:min(1040px,calc(100% - 48px));height:76px;margin:auto;padding:0;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:nowrap}
+.brand{padding:0;font-size:1.35rem;gap:10px}
+.header-links{display:flex;align-items:center;gap:28px}
+.header-links a{display:flex;align-items:center;min-height:44px;color:var(--muted);text-decoration:none;font-size:.8125rem;font-weight:600}
+.header-links a:hover{color:var(--ink)}
+.site-body{margin-left:0}
+.container{width:min(960px,calc(100% - 48px))}
+.app-main{padding-top:52px}
+.app-heading{display:block;text-align:center;margin-bottom:30px}
+.app-heading .eyebrow{font-size:.75rem;letter-spacing:.08em;margin-bottom:14px;color:#667085}
+.app-heading h1{font-size:clamp(2rem,3.5vw,2.75rem);line-height:1.3;letter-spacing:-1.7px;font-weight:780}
+.app-heading h1 span{color:var(--ink)}
+.heading-description{margin-top:16px;font-size:.9375rem;line-height:1.8}
+.mobile-break{display:none}
+.mailbox-card{max-width:780px;margin-inline:auto;padding:26px 32px 0;background:#172033;border-color:#172033;border-radius:18px;box-shadow:0 12px 30px #17203312;color:#fff}
+.mailbox-top{justify-content:center;margin-bottom:18px}
+.mailbox-top h2{font-size:.875rem;font-weight:500;color:#c9d3e4}
+.mailbox-top h2 .icon{color:#a5baff;width:18px;height:18px}
+.free-label{display:none}
+.address-box{justify-content:center;flex-wrap:wrap;gap:12px;padding:0;background:none;border:0;border-radius:0}
+.address-box input{flex:0 0 100%;text-align:center;font-size:clamp(1rem,2.6vw,1.65rem);letter-spacing:-.5px;color:#fff;background:#ffffff08;border:1px solid #ffffff26;border-radius:10px;padding:15px 10px;line-height:1.6}
+.address-box input::placeholder{color:#b6c1d3;font-size:1rem}
+.address-box .button{min-height:46px;min-width:140px;padding:12px 24px}
+.address-box .copy-button{flex:none;background:#4777ff}
+.address-box .copy-button:hover:not(:disabled){background:#3567ed}
+.address-box .create-button{margin:0}
+.address-box .button-light{background:#ffffff12;color:#e2e8f0;border:1px solid #ffffff26}
+.address-box .button-light:hover:not(:disabled){background:#ffffff20}
+.mailbox-bottom{justify-content:center;gap:24px;min-height:62px}
+.time-remaining,.mailbox-card .text-button{color:#b6c1d3;font-size:.75rem}
+.mailbox-card .text-button:hover{color:#fff}
+.time-remaining progress{display:none}
+.service-status{justify-content:center;margin:0 -32px;padding:12px 24px;border-color:#ffffff15;background:#101827}
+.service-status p{flex:0 1 auto;color:#b6c1d3;font-size:.75rem}
+.service-status p.is-error{color:#ffb6bd}
+.service-status .inline-action{color:#a8c0ff}
+.inbox-workspace{margin-top:32px;box-shadow:none;border-radius:12px}
+.inbox-toolbar{padding:16px 24px;background:#fff}
+.inbox-toolbar .button{min-height:44px}
+.empty-state{min-height:280px}
+.privacy-note{justify-content:center;text-align:center;padding:18px 20px}
+.public-intro.article-body{margin-top:42px;background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:36px 0 0;box-shadow:none}
+.steps li{background:transparent;border:0;border-radius:0;border-left:2px solid var(--line)}
+.home-guide{gap:40px}
+.site-footer .container{width:min(960px,calc(100% - 48px))}
+@media(max-width:640px){
+  .header-inner{height:66px;width:calc(100% - 32px);gap:12px}
+  .brand{font-size:1.2rem}.brand-mark{width:30px;height:30px;border-radius:8px}
+  .header-links{gap:14px}.header-links a{font-size:.7rem}
+  .container{width:calc(100% - 32px)}.app-main{padding-top:34px}
+  .app-heading{margin-bottom:24px}.app-heading h1{font-size:2rem;letter-spacing:-1.2px}
+  .heading-description{font-size:.8125rem;margin-top:12px}.mobile-break{display:block}
+  .mailbox-card{padding:22px 16px 0;border-radius:14px}
+  .address-box input{font-size:clamp(.875rem,4vw,1.25rem);padding:14px 6px}
+  .address-box input::placeholder{font-size:.8125rem}
+  .address-box .button{min-width:0;flex:1;padding-inline:16px}
+  .mailbox-bottom{gap:18px;min-height:60px}
+  .service-status{margin:0 -16px;padding:12px 16px;gap:7px}
+  .service-status p{font-size:.7rem}.inbox-workspace{margin-top:24px}
+  .inbox-toolbar{padding:12px 16px}.privacy-note{text-align:left;padding:16px 0}
+  .public-intro.article-body{margin-top:24px;padding-top:28px}
+  .home-guide{gap:24px}.site-footer .container{width:calc(100% - 32px)}
+}
 
 .public-intro{margin:32px 0;max-width:none}.public-intro h2{font-size:1.25rem}.article-toc,.related-guides{padding:20px 24px;border:1px solid #e3e8ef;border-radius:16px;background:#f8fafc;margin:28px 0}.article-toc h2,.related-guides h2{margin-top:0;font-size:1.1rem}.article-body section[id]{scroll-margin-top:24px}.breadcrumb{display:flex;flex-wrap:wrap;gap:8px;line-height:1.6}.breadcrumb a[aria-current="page"]{color:inherit}
