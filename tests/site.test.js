@@ -20,6 +20,18 @@ test('mailbox issuance celebration adds and clears its completion state', () => 
   assert.doesNotMatch(app.match(/async function restore\(\) \{([\s\S]*?)\n  \}/)?.[1] || '', /celebrateMailbox\(/);
   assert.equal((app.match(/celebrateMailbox\(\)/g) || []).length, 2, 'celebration should only be defined and invoked once');
 });
+test('mailbox issuance motion is scoped, sequenced, and disabled for reduced motion', () => {
+  const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const issued = styles.match(/\.mailbox-card\.mailbox-issued\{([^}]*)\}/)?.[1];
+  assert.ok(issued, 'mailbox-issued card styling should exist');
+  assert.match(issued, /animation\s*:\s*mailbox-arrival/);
+  assert.match(styles, /\.mailbox-card\.mailbox-issued\s+\.address-box\{[^}]*animation\s*:\s*address-reveal/);
+  assert.match(styles, /\.mailbox-card\.mailbox-issued\s+\.copy-button\{[^}]*animation\s*:\s*copy-pulse/);
+  for (const name of ['mailbox-arrival', 'address-reveal', 'copy-pulse']) {
+    assert.match(styles, new RegExp(`@keyframes\\s+${name}`));
+  }
+  assert.match(styles, /@media\(prefers-reduced-motion:reduce\)\{[^}]*\.mailbox-card\.mailbox-issued(?:\s*,[^}]*)?\{[^}]*animation\s*:\s*none/);
+});
 test('public build is crawlable, linked, and never ships API source or secrets', () => {
   execFileSync(process.execPath,['scripts/build.js'],{cwd:root});
   const dist = path.join(root,'dist');
