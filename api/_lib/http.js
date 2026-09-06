@@ -2,6 +2,9 @@ function json(res, statusCode, payload) {
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Robots-Tag", "noindex, nofollow, nosnippet");
+  res.setHeader("Vary", "Cookie");
   res.end(JSON.stringify(payload, null, 2));
 }
 

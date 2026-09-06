@@ -1,4 +1,9 @@
 .env
+.env.*
+!.env.example
+dist/
+.build-report.json
+node_modules/
 /data/messages.json
 /data/aliases.json
 /logs/

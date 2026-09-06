@@ -1,182 +1,93 @@
-function normalizeAddress(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
+const pageCache = new Map();
+const CACHE_MS = 20000;
+let nextRequestAt = 0;
+let pendingRequests = 0;
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 function getAddressList(payload, key) {
-  const value = payload?.[key];
-  if (!value) {
-    return [];
-  }
-
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => normalizeAddress(item?.address || item?.email || item))
-      .filter(Boolean);
-  }
-
-  return [normalizeAddress(value?.address || value?.email || value)].filter(Boolean);
+  const values = Array.isArray(payload?.[key]) ? payload[key] : payload?.[key] ? [payload[key]] : [];
+  return values.map(value => String(value?.address || value?.email || value).trim().toLowerCase());
 }
-
-function getSender(payload) {
-  const value = payload?.from;
-  if (!value) {
-    return "";
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  return value.address || value.email || value.name || String(value);
-}
-
-function getBodyContent(value) {
-  if (!value) {
-    return "";
-  }
-
-  if (Array.isArray(value)) {
-    return value.join("\n");
-  }
-
-  return String(value);
-}
-
-function deriveIntro(message) {
-  const source = getBodyContent(message?.text) || getBodyContent(message?.html) || "";
-  return source
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 160);
-}
-
-function mergeAttachments(metadataList = [], downloadList = []) {
-  const downloadById = new Map(downloadList.map((item) => [item.id, item]));
-  return metadataList.map((attachment) => ({
-    id: attachment.id,
-    filename: attachment.filename,
-    contentType: attachment.content_type,
-    contentDisposition: attachment.content_disposition,
-    contentId: attachment.content_id,
-    size: attachment.size || downloadById.get(attachment.id)?.size || null,
-    downloadUrl: downloadById.get(attachment.id)?.download_url || null,
-    expiresAt: downloadById.get(attachment.id)?.expires_at || null,
-  }));
-}
-
-function normalizeMessage(payload) {
-  return {
-    id: payload.id || payload.email_id,
-    from: getSender(payload),
-    to: getAddressList(payload, "to"),
-    cc: getAddressList(payload, "cc"),
-    bcc: getAddressList(payload, "bcc"),
-    replyTo: getAddressList(payload, "reply_to"),
-    subject: payload.subject || "(제목 없음)",
-    createdAt: payload.created_at || payload.createdAt || new Date().toISOString(),
-    messageId: payload.message_id || payload.messageId || "",
-    text: getBodyContent(payload.text),
-    html: getBodyContent(payload.html),
-    headers: payload.headers || {},
-    raw: payload.raw || null,
-    attachments: mergeAttachments(payload.attachments || [], payload.attachmentDownloads || []),
-    intro: payload.intro || deriveIntro(payload),
-    source: payload.source || "resend-api",
-  };
-}
-
-function sortMessagesDesc(messages) {
-  return [...messages].sort((left, right) => {
-    return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+function decodeEntities(text) {
+  const named = { nbsp: ' ', lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' };
+  return text.replace(/&(#x[\da-f]+|#\d+|nbsp|lt|gt|quot|apos|amp);/gi, (whole, entity) => {
+    if (!entity.startsWith('#')) return named[entity.toLowerCase()];
+    const code = entity[1].toLowerCase() === 'x' ? parseInt(entity.slice(2),16) : Number(entity.slice(1));
+    return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : whole;
   });
 }
-
-function messageTargetsAddress(message, address) {
-  const wanted = normalizeAddress(address);
-  const recipients = [
-    ...(message.to || []),
-    ...(message.cc || []),
-    ...(message.bcc || []),
-  ];
-  return recipients.some((item) => normalizeAddress(item) === wanted);
-}
-
-async function resendRequest(pathname) {
-  const apiKey = process.env.RESEND_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY 가 설정되지 않았습니다.");
-  }
-
-  const response = await fetch(`https://api.resend.com${pathname}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-  });
-
-  const text = await response.text();
-  let payload = null;
-
-  if (text) {
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      payload = { message: text };
-    }
-  }
-
-  if (!response.ok) {
-    throw new Error(payload?.message || payload?.error || `Resend API error (${response.status})`);
-  }
-
-  return payload;
-}
-
-async function listReceivedMessages(address) {
-  const target = normalizeAddress(address);
-  const payload = await resendRequest("/emails/receiving?limit=100");
-  const list = Array.isArray(payload?.data) ? payload.data : [];
-
-  const filtered = list
-    .filter((message) => {
-      const recipients = [
-        ...getAddressList(message, "to"),
-        ...getAddressList(message, "cc"),
-        ...getAddressList(message, "bcc"),
-      ];
-      return recipients.includes(target);
+function plainText(html) {
+  const text = String(html || '').replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+    .replace(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi, (whole, attributes, label) => {
+      const href = attributes.match(/(?:^|\s)href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+      if (!href) return label;
+      try {
+        const url = new URL(decodeEntities(href[1] ?? href[2] ?? href[3]));
+        if (!['http:', 'https:'].includes(url.protocol)) return label;
+        // Preserve the destination as text; never render or automatically visit it.
+        return label + '\n' + url.href.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') + '\n';
+      } catch { return label; }
     })
-    .map((message) => normalizeMessage({ ...message, source: "resend-api" }));
-
-  return sortMessagesDesc(filtered);
+    .replace(/<(?:br|\/p|\/div|\/tr|\/h[1-6])\b[^>]*>/gi, '\n').replace(/<[^>]*>/g, '');
+  return decodeEntities(text);
 }
-
-async function getReceivedMessage(id) {
-  const safeId = encodeURIComponent(id);
-  const email = await resendRequest(`/emails/receiving/${safeId}`);
-  let attachmentDownloads = [];
-
-  if (Array.isArray(email?.attachments) && email.attachments.length > 0) {
-    try {
-      const attachmentPayload = await resendRequest(`/emails/receiving/${safeId}/attachments`);
-      attachmentDownloads = Array.isArray(attachmentPayload?.data) ? attachmentPayload.data : [];
-    } catch {
-      attachmentDownloads = [];
+function normalizeMessage(payload) {
+  return { id: payload.id || payload.email_id, from: String(payload.from?.address || payload.from || ''),
+    to: getAddressList(payload,'to'), cc: getAddressList(payload,'cc'), bcc: getAddressList(payload,'bcc'),
+    subject: String(payload.subject || '(제목 없음)').slice(0,1000),
+    createdAt: payload.created_at || payload.createdAt || '',
+    text: String(payload.text || plainText(payload.html) || '').slice(0,200000) };
+}
+async function resendRequest(pathname) {
+  if (!process.env.RESEND_API_KEY) throw new Error('Receiving unavailable');
+  // Bound admission and include waiting in the timeout. This throttle is per instance.
+  const delay = Math.max(0, nextRequestAt - Date.now());
+  if (pendingRequests >= 8 || delay > 3000) throw new Error('Receiving provider busy');
+  nextRequestAt = Date.now() + delay + 550;
+  pendingRequests++;
+  try {
+    await wait(delay);
+    const response = await fetch('https://api.resend.com' + pathname, {
+      headers: { Authorization: 'Bearer ' + process.env.RESEND_API_KEY },
+      signal: AbortSignal.timeout(Math.max(1, 6000 - delay))
+    });
+    if (!response.ok) throw new Error('Receiving provider unavailable');
+    return JSON.parse(await response.text());
+  } finally { pendingRequests--; }
+}
+function getPage(after) {
+  const key = after || '';
+  const now = Date.now();
+  for (const [id, entry] of pageCache) if (entry.expiresAt <= now) pageCache.delete(id);
+  const cached = pageCache.get(key);
+  if (cached) return cached.promise;
+  if (pageCache.size >= 64) pageCache.delete(pageCache.keys().next().value);
+  const entry = { expiresAt: now + CACHE_MS };
+  entry.promise = resendRequest('/emails/receiving?limit=100' + (after ? '&after=' + encodeURIComponent(after) : ''))
+    .catch(error => { if (pageCache.get(key) === entry) pageCache.delete(key); throw error; });
+  pageCache.set(key, entry);
+  return entry.promise;
+}
+async function listReceivedMessages(address, since = 0, after = '') {
+  const messages = [];
+  let partial = false, nextAfter = '';
+  const started = Date.now();
+  for (let page = 0; page < 10; page++) {
+    const payload = await getPage(after);
+    const data = Array.isArray(payload?.data) ? payload.data : [];
+    for (const raw of data) {
+      const message = normalizeMessage(raw);
+      if ([...message.to,...message.cc,...message.bcc].includes(address.toLowerCase()) && Date.parse(message.createdAt) >= since - 5000) messages.push(message);
     }
+    const oldest = data.at(-1);
+    if (!payload?.has_more || !oldest || Date.parse(oldest.created_at) < since - 5000) { partial = false; nextAfter = ''; break; }
+    if (typeof oldest.id !== 'string' || !/^[a-zA-Z0-9_-]{1,200}$/.test(oldest.id) || oldest.id === after) throw new Error('Invalid provider pagination');
+    partial = true;
+    nextAfter = oldest.id;
+    if (Date.now() - started > 6000) break;
+    after = nextAfter;
   }
-
-  return normalizeMessage({
-    ...email,
-    attachmentDownloads,
-    source: "resend-api",
-  });
+  return { messages: [...new Map(messages.map(m => [m.id,m])).values()].sort((a,b) => Date.parse(b.createdAt)-Date.parse(a.createdAt)), partial, nextAfter };
 }
-
-module.exports = {
-  listReceivedMessages,
-  getReceivedMessage,
-  messageTargetsAddress,
-};
+async function getReceivedMessage(id) { return normalizeMessage(await resendRequest('/emails/receiving/' + encodeURIComponent(id))); }
+function messageTargetsAddress(message,address) { return [...message.to,...message.cc,...message.bcc].includes(address.toLowerCase()); }
+module.exports = { listReceivedMessages, getReceivedMessage, messageTargetsAddress };

@@ -6,7 +6,7 @@ PID_FILE="$SCRIPT_DIR/logs/free-mail-forge.pid"
 
 if [ ! -f "$PID_FILE" ]; then
   echo
-  echo "실행 중인 Free Mail Forge 프로세스를 찾지 못했습니다."
+  echo "실행 중인 하루메일 프로세스를 찾지 못했습니다."
   echo
   exit 0
 fi
@@ -27,7 +27,7 @@ if kill -0 "$PID" 2>/dev/null; then
     kill -9 "$PID" 2>/dev/null || true
   fi
   echo
-  echo "Free Mail Forge를 종료했습니다."
+  echo "하루메일을 종료했습니다."
   echo
 else
   echo

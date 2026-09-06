@@ -58,7 +58,7 @@ URL="http://$HOST:$PORT"
 if [ -f "$PID_FILE" ]; then
   OLD_PID="$(cat "$PID_FILE" 2>/dev/null || true)"
   if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null; then
-    show_message "Free Mail Forge가 이미 실행 중입니다. 브라우저를 엽니다: $URL"
+    show_message "하루메일이 이미 실행 중입니다. 브라우저를 엽니다: $URL"
     maybe_open "$URL"
     exit 0
   fi
@@ -77,7 +77,7 @@ echo "$PID" > "$PID_FILE"
 sleep 2
 
 if kill -0 "$PID" 2>/dev/null; then
-  show_message "Free Mail Forge가 실행되었습니다. 브라우저를 엽니다: $URL"
+  show_message "하루메일이 실행되었습니다. 브라우저를 엽니다: $URL"
   maybe_open "$URL"
   exit 0
 fi
