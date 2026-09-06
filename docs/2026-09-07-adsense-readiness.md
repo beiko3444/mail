@@ -23,7 +23,7 @@
 
 ## 광고 활성화 전
 
-- Google 유럽 규정 메시지 작성 화면에서 HaruMail 사이트명 및 `https://www.haruemail.com/en/privacy/` 연결 작업을 진행했다. 실제 메시지 저장·게시·CMP 동작 검증은 별도 확인이 필요하다.
+- Google 유럽 규정 메시지 `HaruMail — Europe privacy choices`를 초안으로 저장했다. HaruMail 사이트명 및 `https://www.haruemail.com/en/privacy/` 연결, 기본 영어와 독일어·스페인어·일본어·포르투갈어·프랑스어, 모든 대상 지역의 동의하지 않음 버튼을 구성했다. Google 목록에서 초안/게시 꺼짐을 확인했다. 실제 게시·태그 설치·거부/철회 동작 검증은 광고 활성화 전에 필요하다. 한국어는 해당 Google 메시지 언어 목록에서 제공되지 않아 영어 기본값을 사용한다.
 - Google 인증 CMP, 거부/철회 선택, 필요한 지역별 개인정보 설정과 실제 광고 슬롯을 검증한 뒤 광고를 활성화한다. 현재 `approved:false`, `consentReady:false` 유지.
 - 자동 광고로 수신함에 광고가 들어가지 않도록 한다. 공개 편집 가이드에만 수동 광고를 허용하는 기존 경계를 유지한다.
 - 개인정보 설명과 실제 배포 설정이 일치해야 한다. 동의 메시지를 만들었다는 사실만으로 `consentReady`를 참으로 바꾸지 않는다.
@@ -42,3 +42,5 @@
 - [AdSense 프로그램 정책](https://support.google.com/adsense/answer/48182?hl=ko)
 - [Google 인증 CMP 요건](https://support.google.com/adsense/answer/13554116?hl=en)
 - [사이트가 광고를 게재할 준비가 되지 않았을 때](https://support.google.com/adsense/answer/12176698?hl=ko)
+
+배포 후 84개 공개 URL의 HTTP 200, 소유권 태그, 현재 수신업체 설명, 가이드 출처, 광고 스크립트 부재 및 ads.txt를 실제 운영 도메인에서 재확인했다.
