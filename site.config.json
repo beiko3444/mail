@@ -1,7 +1,7 @@
 {
   "name": "하루메일",
   "origin": "https://www.haruemail.com",
-  "supportEmail": "",
+  "supportEmail": "contact@haruemail.com",
   "ads": {
     "publisherId": "pub-8288401260787220",
     "slotId": "",
@@ -11,5 +11,6 @@
   "searchConsoleVerification": "JBoG0ghBZzETOT3d72-S1ZAkBGW19YGkmZCnn5PGI2Q",
   "searchConsoleAdditionalVerifications": [
     "YADuFd67d8RBbdJpG_RlvZh4wOClFujo9BrUjcu7thU"
-  ]
+  ],
+  "operatorName": "lee davin"
 }
