@@ -37,7 +37,7 @@ function icon(name) {
  return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">'+paths[name]+'</svg>';
 }
 function layout(title,description,body,route,type='page',extra='') {
-  const fullTitle=route==='/'?'하루메일 | 무료 임시메일·일회용 이메일':title+' | '+config.name;
+  const fullTitle=route==='/'?'무료 임시메일·일회용 이메일 | 하루메일':title+' | '+config.name;
   const nodes=[{'@type':'Organization','@id':config.origin+'/#organization',name:config.name,url:config.origin+'/about/'},{'@type':'WebPage','@id':config.origin+route+'#webpage',url:config.origin+route,name:fullTitle,description,inLanguage:'ko-KR'}];
   if(route==='/')nodes.push({'@type':'WebSite','@id':config.origin+'/#website',name:config.name,url:config.origin+'/',inLanguage:'ko-KR',publisher:{'@id':config.origin+'/#organization'}});
   const ads=type==='guide' && canShowAds(route,config.ads);
