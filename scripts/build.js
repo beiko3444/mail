@@ -28,14 +28,15 @@ function layout(title,description,body,route,type='page',extra='') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escape(title)} | XT Mail</title>
+<title>${escape(title)} | ${escape(config.name)}</title>
 <meta name="description" content="${escape(description)}">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#142235">
 <link rel="canonical" href="${escape(config.origin+route)}">
 <meta property="og:type" content="${type==='guide'?'article':'website'}">
 <meta property="og:locale" content="ko_KR">
-<meta property="og:title" content="${escape(title)} | XT Mail">
+<meta property="og:site_name" content="${escape(config.name)}">
+<meta property="og:title" content="${escape(title)} | ${escape(config.name)}">
 <meta property="og:description" content="${escape(description)}">
 <meta property="og:url" content="${escape(config.origin+route)}">
 ${config.ads.publisherId?`<meta name="google-adsense-account" content="ca-${config.ads.publisherId}">`:''}
@@ -47,9 +48,9 @@ ${extra}
 </head>
 <body data-page-type="${type}">
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
-<header class="site-header"><div class="container header-inner"><a class="brand" href="/" aria-label="XT Mail 홈"><span class="brand-mark" aria-hidden="true">✉</span>XT MAIL<small>무료 임시 이메일</small></a><nav class="site-nav" aria-label="주 메뉴">${nav.map(([p,n])=>`<a href="${p}"${current(p)?' aria-current="page"':''}>${n}</a>`).join('')}</nav></div></header>
+<header class="site-header"><div class="container header-inner"><a class="brand" href="/" aria-label="${escape(config.name)} 홈"><span class="brand-mark" aria-hidden="true">✉</span>${escape(config.name)}<small>무료 임시 이메일</small></a><nav class="site-nav" aria-label="주 메뉴">${nav.map(([p,n])=>`<a href="${p}"${current(p)?' aria-current="page"':''}>${n}</a>`).join('')}</nav></div></header>
 ${body}
-<footer class="site-footer"><div class="container"><div class="footer-top"><a href="/" class="footer-brand">XT MAIL</a><nav class="footer-links" aria-label="서비스 안내"><a href="/about/">서비스 소개</a><a href="/contact/">문의</a><a href="/privacy/">개인정보처리방침</a><a href="/terms/">이용약관</a></nav></div><p class="footer-bottom">© 2026 XT Mail · 무료 수신 서비스 · 중요한 계정에는 계속 사용할 수 있는 이메일을 이용하세요.</p></div></footer>
+<footer class="site-footer"><div class="container"><div class="footer-top"><a href="/" class="footer-brand">${escape(config.name)}</a><nav class="footer-links" aria-label="서비스 안내"><a href="/about/">서비스 소개</a><a href="/contact/">문의</a><a href="/privacy/">개인정보처리방침</a><a href="/terms/">이용약관</a></nav></div><p class="footer-bottom">© 2026 ${escape(config.name)} · 무료 수신 서비스 · 중요한 계정에는 계속 사용할 수 있는 이메일을 이용하세요.</p></div></footer>
 ${ads?'<script src="/ads.js" defer></script>':''}
 </body></html>`;
 }
@@ -57,7 +58,7 @@ function save(route,html) {
  const target=path.join(dist,route==='/'?'index.html':route.replace(/^\//,'')+'index.html');
  fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,html);routes.push(route);
 }
-function heading(title,description) {return `<header class="page-heading"><span class="eyebrow ink">XT MAIL GUIDE</span><h1>${escape(title)}</h1><p>${escape(description)}</p></header>`;}
+function heading(title,description) {return `<header class="page-heading"><span class="eyebrow ink">${escape(config.name)} 가이드</span><h1>${escape(title)}</h1><p>${escape(description)}</p></header>`;}
 function documentPage(page) {return `<main id="main" class="container page-main">${heading(page.title,page.description)}<article class="article-body">${page.body}</article></main>`;}
 fs.rmSync(dist,{recursive:true,force:true});fs.mkdirSync(dist,{recursive:true});
 for(const name of ['styles.css','app.js','ads.js','favicon.svg'])fs.copyFileSync(path.join(root,name),path.join(dist,name));
@@ -69,8 +70,8 @@ for(const guide of guides) {
  const sections=guide.sections.map(s=>`<section><h2>${escape(s.heading)}</h2>${s.paragraphs.map(p=>`<p>${escape(p)}</p>`).join('')}${s.bullets?`<ul>${s.bullets.map(p=>`<li>${escape(p)}</li>`).join('')}</ul>`:''}</section>`).join('');
  const sources=`<div class="sources"><h2>참고 자료</h2><ul>${guide.sources.map(s=>`<li><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">${escape(s.title)}</a></li>`).join('')}</ul></div>`;
  const ad=canShowAds(route,config.ads)?`<aside class="article-ad" aria-label="광고"><span>광고</span><ins class="adsbygoogle" style="display:block" data-ad-client="ca-${config.ads.publisherId}" data-ad-slot="${config.ads.slotId}" data-ad-format="auto" data-full-width-responsive="true"></ins></aside>`:'';
- const body=`<main id="main" class="container page-main"><div class="breadcrumb"><a href="/guides/">이용 가이드</a> / ${escape(guide.category)}</div>${heading(guide.title,guide.description)}<article class="article-body"><p class="article-meta">XT Mail 편집 · 2026년 9월 6일</p>${sections}${sources}${ad}</article><p class="article-back"><a href="/guides/">← 전체 가이드</a> · <a href="/">무료 임시메일 사용하기</a></p></main>`;
- const schema=JSON.stringify({'@context':'https://schema.org','@type':'Article',headline:guide.title,description:guide.description,datePublished:'2026-09-06',dateModified:'2026-09-06',author:{'@type':'Organization',name:'XT Mail',url:config.origin+'/about/'},mainEntityOfPage:config.origin+route}).replaceAll('<','\\u003c');
+ const body=`<main id="main" class="container page-main"><div class="breadcrumb"><a href="/guides/">이용 가이드</a> / ${escape(guide.category)}</div>${heading(guide.title,guide.description)}<article class="article-body"><p class="article-meta">${escape(config.name)} 편집 · 2026년 9월 6일</p>${sections}${sources}${ad}</article><p class="article-back"><a href="/guides/">← 전체 가이드</a> · <a href="/">무료 임시메일 사용하기</a></p></main>`;
+ const schema=JSON.stringify({'@context':'https://schema.org','@type':'Article',headline:guide.title,description:guide.description,datePublished:'2026-09-06',dateModified:'2026-09-06',author:{'@type':'Organization',name:config.name,url:config.origin+'/about/'},mainEntityOfPage:config.origin+route}).replaceAll('<','\\u003c');
  save(route,layout(guide.title,guide.description,body,route,'guide','<script type="application/ld+json">'+schema+'</script>'));
 }
 const faqBody=`<main id="main" class="container page-main">${heading('자주 묻는 질문','주소 생성, 메일함 이용기간, 수신 문제에 대한 답변입니다.')}<div class="faq-list">${faq.map(item=>`<details><summary>${escape(item.question)}</summary><p>${escape(item.answer)}</p></details>`).join('')}</div><p class="article-back">해결되지 않았다면 <a href="/contact/">문의 방법</a>을 확인해 주세요.</p></main>`;
