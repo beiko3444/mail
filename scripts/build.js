@@ -19,6 +19,10 @@ const cmp=fs.existsSync(cmpFile)?fs.readFileSync(cmpFile,'utf8'):'';
 if (config.ads.approved && (!config.ads.consentReady || !cmp.trim() || !/^\d{10}$/.test(config.ads.slotId))) throw new Error('Before ads, install the actual certified CMP snippet, verify its messages and set a real manual ad slot.');
 const pages=require('../content/pages')(config,escape);
 const routes=[];
+const verification=process.env.GOOGLE_SITE_VERIFICATION ?? config.searchConsoleVerification ?? '';
+function jsonLd(nodes) { return '<script type="application/ld+json">'+JSON.stringify({'@context':'https://schema.org','@graph':nodes}).replaceAll('<','\\u003c')+'</script>'; }
+function breadcrumb(guide) { return [{name:'홈',path:'/'},{name:'이용 가이드',path:'/guides/'},{name:guide.title,path:'/guides/'+guide.slug+'/'}]; }
+
 function icon(name) {
  const paths = {
   mail:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/>',
@@ -30,6 +34,9 @@ function icon(name) {
  return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">'+paths[name]+'</svg>';
 }
 function layout(title,description,body,route,type='page',extra='') {
+  const fullTitle=route==='/'?'하루메일 | 무료 임시메일·일회용 이메일':title+' | '+config.name;
+  const nodes=[{'@type':'Organization','@id':config.origin+'/#organization',name:config.name,url:config.origin+'/about/'},{'@type':'WebPage','@id':config.origin+route+'#webpage',url:config.origin+route,name:fullTitle,description,inLanguage:'ko-KR'}];
+  if(route==='/')nodes.push({'@type':'WebSite','@id':config.origin+'/#website',name:config.name,url:config.origin+'/',inLanguage:'ko-KR',publisher:{'@id':config.origin+'/#organization'}});
   const ads=type==='guide' && canShowAds(route,config.ads);
   const nav=[['/','받은편지함','inbox'],['/guides/','이용 가이드','book'],['/faq/','자주 묻는 질문','help']];
   const current=p=>p==='/'?route==='/':route.startsWith(p);
@@ -38,7 +45,7 @@ function layout(title,description,body,route,type='page',extra='') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escape(title)} | ${escape(config.name)}</title>
+<title>${escape(fullTitle)}</title>
 <meta name="description" content="${escape(description)}">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#245cdb">
@@ -46,7 +53,7 @@ function layout(title,description,body,route,type='page',extra='') {
 <meta property="og:type" content="${type==='guide'?'article':'website'}">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:site_name" content="${escape(config.name)}">
-<meta property="og:title" content="${escape(title)} | ${escape(config.name)}">
+<meta property="og:title" content="${escape(fullTitle)}">
 <meta property="og:description" content="${escape(description)}">
 <meta property="og:url" content="${escape(config.origin+route)}">
 ${config.ads.publisherId?`<meta name="google-adsense-account" content="ca-${config.ads.publisherId}">`:''}
@@ -54,6 +61,8 @@ ${type==='error'?'<meta name="robots" content="noindex">':''}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/styles.css">
 ${ads?cmp:''}
+${verification?`<meta name="google-site-verification" content="${escape(verification)}">`:""}
+${jsonLd(nodes)}
 ${extra}
 </head>
 <body data-page-type="${type}">
@@ -79,12 +88,22 @@ const cards=guides.map(g=>`<article class="article-card"><span class="category">
 save('/guides/',layout('이용 가이드','임시메일을 선택하고 사용하는 방법부터 미수신 문제 해결과 개발 테스트까지 안내합니다.',`<main id="main" class="container page-main">${heading('필요할 때 찾아보는 메일 가이드','주소를 만들기 전부터 메일을 확인한 뒤까지. 짧은 수신함을 제대로 사용하는 방법을 알아보세요.')}<div class="article-grid">${cards}</div></main>`,'/guides/'));
 for(const guide of guides) {
  const route='/guides/'+guide.slug+'/';
- const sections=guide.sections.map(s=>`<section><h2>${escape(s.heading)}</h2>${s.paragraphs.map(p=>`<p>${escape(p)}</p>`).join('')}${s.bullets?`<ul>${s.bullets.map(p=>`<li>${escape(p)}</li>`).join('')}</ul>`:''}</section>`).join('');
+ const sections=guide.sections.map((s,i)=>`<section id="section-${i+1}"><h2>${escape(s.heading)}</h2>${s.paragraphs.map(p=>`<p>${escape(p)}</p>`).join('')}${s.bullets?`<ul>${s.bullets.map(p=>`<li>${escape(p)}</li>`).join('')}</ul>`:''}</section>`).join('');
  const sources=`<div class="sources"><h2>참고 자료</h2><ul>${guide.sources.map(s=>`<li><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">${escape(s.title)}</a></li>`).join('')}</ul></div>`;
  const ad=canShowAds(route,config.ads)?`<aside class="article-ad" aria-label="광고"><span>광고</span><ins class="adsbygoogle" style="display:block" data-ad-client="ca-${config.ads.publisherId}" data-ad-slot="${config.ads.slotId}" data-ad-format="auto" data-full-width-responsive="true"></ins></aside>`:'';
- const body=`<main id="main" class="container page-main"><div class="breadcrumb"><a href="/guides/">이용 가이드</a> / ${escape(guide.category)}</div>${heading(guide.title,guide.description)}<article class="article-body"><p class="article-meta">${escape(config.name)} 편집 · 2026년 9월 6일</p>${sections}${sources}${ad}</article><p class="article-back"><a href="/guides/">← 전체 가이드</a> · <a href="/">무료 임시메일 사용하기</a></p></main>`;
- const schema=JSON.stringify({'@context':'https://schema.org','@type':'Article',headline:guide.title,description:guide.description,datePublished:'2026-09-06',dateModified:'2026-09-06',author:{'@type':'Organization',name:config.name,url:config.origin+'/about/'},mainEntityOfPage:config.origin+route}).replaceAll('<','\\u003c');
- save(route,layout(guide.title,guide.description,body,route,'guide','<script type="application/ld+json">'+schema+'</script>'));
+ const crumbs=breadcrumb(guide);
+ const toc=`<nav class="article-toc" aria-label="목차"><h2>이 글에서 알아볼 내용</h2><ol>${guide.sections.map((s,i)=>`<li><a href="#section-${i+1}">${escape(s.heading)}</a></li>`).join('')}</ol></nav>`;
+ const relatedSlugs={
+  'temporary-email-and-privacy':['temporary-email-alias-or-inbox','phishing-and-remote-tracking','missing-email-checklist'],
+  'temporary-email-alias-or-inbox':['temporary-email-and-privacy','responsible-email-testing'],
+  'missing-email-checklist':['temporary-email-alias-or-inbox','responsible-email-testing'],
+  'responsible-email-testing':['missing-email-checklist','temporary-email-and-privacy'],
+  'phishing-and-remote-tracking':['temporary-email-and-privacy','missing-email-checklist']
+ };
+ const related=`<aside class="related-guides" aria-label="관련 가이드"><h2>함께 읽으면 좋은 가이드</h2><ul>${relatedSlugs[guide.slug].map(slug=>{const g=guides.find(g=>g.slug===slug);return `<li><a href="/guides/${slug}/">${escape(g.title)}</a></li>`;}).join('')}</ul></aside>`;
+ const body=`<main id="main" class="container page-main"><nav class="breadcrumb" aria-label="현재 위치">${crumbs.map((c,i)=>`<a href="${c.path}"${i===2?' aria-current="page"':''}>${escape(c.name)}</a>`).join(' <span aria-hidden="true">/</span> ')}</nav>${heading(guide.title,guide.description)}<article class="article-body"><p class="article-meta">${escape(config.name)} 편집 · 2026년 9월 6일</p>${toc}${sections}${sources}${ad}${related}</article><p class="article-back"><a href="/guides/">← 전체 가이드</a> · <a href="/">무료 임시메일 사용하기</a></p></main>`;
+ const schema=jsonLd([{'@type':'Article',headline:guide.title,description:guide.description,datePublished:'2026-09-06',dateModified:'2026-09-06',author:{'@id':config.origin+'/#organization'},publisher:{'@id':config.origin+'/#organization'},mainEntityOfPage:{'@id':config.origin+route+'#webpage'},inLanguage:'ko-KR'},{'@type':'BreadcrumbList',itemListElement:crumbs.map((c,i)=>({'@type':'ListItem',position:i+1,name:c.name,item:config.origin+c.path}))}]);
+ save(route,layout(guide.title,guide.description,body,route,'guide',schema));
 }
 const faqBody=`<main id="main" class="container page-main">${heading('자주 묻는 질문','주소 생성, 메일함 이용기간, 수신 문제에 대한 답변입니다.')}<div class="faq-list">${faq.map(item=>`<details><summary>${escape(item.question)}</summary><p>${escape(item.answer)}</p></details>`).join('')}</div><p class="article-back">해결되지 않았다면 <a href="/contact/">문의 방법</a>을 확인해 주세요.</p></main>`;
 save('/faq/',layout('자주 묻는 질문','무료 여부, 24시간 이용기간, 수신 문제와 메일 보관에 대한 답변입니다.',faqBody,'/faq/'));

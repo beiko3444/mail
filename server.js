@@ -13,6 +13,7 @@ function createServer() {
    const url = new URL(req.url,'http://localhost');let pathname;
    try {pathname=decodeURIComponent(url.pathname);} catch {res.writeHead(400);return res.end('Bad request');}
    if(pathname.startsWith('/api/')) {
+    res.setHeader('X-Robots-Tag','noindex, nofollow, nosnippet');
     req.query=Object.fromEntries(url.searchParams);
     let handler=handlers[pathname.replace(/\/$/,'')];
     if(/^\/api\/messages\/[a-zA-Z0-9_-]+$/.test(pathname)){handler=require('./api/messages/[id]');req.query.id=pathname.split('/').pop();}
@@ -22,6 +23,7 @@ function createServer() {
    if(!['GET','HEAD'].includes(req.method)){res.writeHead(405,{Allow:'GET, HEAD'});return res.end();}
    const candidate=path.resolve(root,'.'+pathname);
    if(!candidate.startsWith(root+path.sep) && candidate!==root){res.writeHead(404);return res.end('Not found');}
+   if(pathname.endsWith('/index.html') && fs.existsSync(candidate) && fs.statSync(candidate).isFile()){res.writeHead(308,{Location:pathname.slice(0,-10)+url.search});return res.end();}
    let file=candidate;
    if(fs.existsSync(file)&&fs.statSync(file).isDirectory()){
     if(!pathname.endsWith('/')){res.writeHead(308,{Location:pathname+'/'+url.search});return res.end();}

@@ -134,3 +134,5 @@ dialog::backdrop{background:#16284866;backdrop-filter:blur(3px)}dialog h2{font-s
   dialog{padding:25px}.dialog-actions{display:grid;grid-template-columns:1fr 1fr}.dialog-actions .button{white-space:normal}.dialog-symbol{margin-bottom:17px}
 }
 @media(prefers-reduced-motion:no-preference){a,button{transition:background-color .16s,color .16s,box-shadow .16s}.mailbox-card{transition:border-color .2s}dialog[open]{animation:appear .15s ease-out}@keyframes appear{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}}
+
+.public-intro{margin:32px 0;max-width:none}.public-intro h2{font-size:1.25rem}.article-toc,.related-guides{padding:20px 24px;border:1px solid #e3e8ef;border-radius:16px;background:#f8fafc;margin:28px 0}.article-toc h2,.related-guides h2{margin-top:0;font-size:1.1rem}.article-body section[id]{scroll-margin-top:24px}.breadcrumb{display:flex;flex-wrap:wrap;gap:8px;line-height:1.6}.breadcrumb a[aria-current="page"]{color:inherit}
