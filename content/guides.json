@@ -22,7 +22,7 @@
       {
         "heading": "수신함 닫기와 제공자 삭제는 다릅니다",
         "paragraphs": [
-          "수신함 닫기는 현재 브라우저의 접근 정보를 제거하는 동작입니다. 수신을 처리하는 Resend의 사본이나 발신자가 보유한 메일까지 즉시 지우는 기능은 아닙니다. Resend 가격표는 일반 요금제의 데이터 보관 기간을 30일로 안내하며, 하루메일에서 받은 메일도 제공자에 최대 30일 보관될 수 있습니다. 따라서 화면에서 보이지 않는 상태를 모든 사본이 삭제된 상태로 해석하면 안 됩니다."
+          "수신함 닫기는 현재 브라우저의 접근 정보를 제거하는 동작입니다. 발신자가 보유한 사본이나 서버 저장 기록을 즉시 지우지 않습니다. 현재 하루메일은 Cloudflare Email Routing과 Worker로 수신하고 Supabase에 기록을 저장합니다. 저장 기록의 24시간 자동 삭제 작업은 설정되어 있지 않으므로 접근 기한 이후에도 기록이 남을 수 있습니다. 민감한 자료를 넣지 말고, 삭제 관련 요청은 개인정보처리방침의 문의 방법을 확인하세요."
         ]
       },
       {
@@ -38,8 +38,8 @@
         "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie"
       },
       {
-        "title": "Resend — 요금제별 데이터 보관 기간",
-        "url": "https://resend.com/pricing"
+        "title": "하루메일 — 실제 보관기간과 개인정보 처리",
+        "url": "https://www.haruemail.com/privacy/#retention"
       }
     ]
   },
@@ -114,7 +114,7 @@
       {
         "heading": "수신 경로와 화면 표시를 나누어 점검하세요",
         "paragraphs": [
-          "이메일 도메인의 MX 레코드는 메일을 받을 서버를 안내하는 DNS 설정입니다. Resend 공식 문서는 사용자 도메인으로 수신하려면 수신용 MX 설정이 필요하다고 설명합니다. 주소가 화면에 만들어졌다는 사실만으로 외부 메일을 받을 준비가 끝났다고 판단할 수는 없습니다.",
+          "이메일 도메인의 MX 레코드는 메일을 받을 서버를 안내하는 DNS 설정입니다. Cloudflare Email Routing으로 수신하려면 해당 서비스가 안내하는 MX 설정과 수신 규칙이 필요합니다. 주소가 화면에 만들어졌다는 사실만으로 외부 메일을 받을 준비가 끝났다고 판단할 수는 없습니다.",
           "운영자는 발신 기록, 수신 제공자의 기록, 애플리케이션 처리와 화면 표시를 순서대로 비교해야 합니다. 제공자에 메일이 도착했어도 애플리케이션에서 가져오는 과정에 문제가 있으면 목록이 비어 보일 수 있습니다. 일반 이용자는 발생 시각과 오류 문구를 정리해 운영자에게 알리면 됩니다."
         ]
       },
@@ -131,12 +131,8 @@
     ],
     "sources": [
       {
-        "title": "Resend — 사용자 도메인의 수신용 MX 설정",
-        "url": "https://resend.com/docs/dashboard/receiving/custom-domains"
-      },
-      {
-        "title": "Resend — 메일 수신과 애플리케이션 처리",
-        "url": "https://resend.com/docs/dashboard/receiving/introduction"
+        "title": "Cloudflare — Email Routing 동작과 설정",
+        "url": "https://developers.cloudflare.com/email-routing/"
       }
     ]
   },
@@ -174,7 +170,7 @@
       {
         "heading": "완료 후 테스트 계정과 기록을 정리하세요",
         "paragraphs": [
-          "필요한 결과를 남긴 뒤 테스트 대상 서비스의 계정을 정리하고 더 이상 필요한 메일이 없는지 확인하세요. 하루메일에서 수신함을 닫는 것은 브라우저의 접근 정보를 제거하는 동작이며 제공자 사본을 즉시 삭제하지 않습니다. 받은 메일은 Resend에 최대 30일 보관될 수 있으므로, 처음부터 민감한 데이터를 넣지 않는 테스트 설계가 중요합니다."
+          "필요한 결과를 남긴 뒤 테스트 대상 서비스의 계정을 정리하고 더 이상 필요한 메일이 없는지 확인하세요. 하루메일에서 수신함을 닫는 것은 브라우저의 접근 정보를 제거하는 동작이며 제공자 사본을 즉시 삭제하지 않습니다. 현재 Supabase에 저장한 기록의 24시간 자동 삭제 작업은 설정되어 있지 않으므로, 처음부터 민감한 데이터를 넣지 않는 테스트 설계가 중요합니다."
         ]
       }
     ],
@@ -184,8 +180,8 @@
         "url": "https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html"
       },
       {
-        "title": "Resend — 데이터 보관 기간",
-        "url": "https://resend.com/pricing"
+        "title": "하루메일 — 실제 보관기간과 개인정보 처리",
+        "url": "https://www.haruemail.com/privacy/#retention"
       }
     ]
   },

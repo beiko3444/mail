@@ -11,8 +11,9 @@ const origin = new URL(process.env.SITE_ORIGIN || config.origin);
 if (origin.protocol !== 'https:' || origin.pathname !== '/' || origin.search || origin.hash) throw new Error('SITE_ORIGIN must be an HTTPS origin, without a path.');
 config.origin=origin.origin;
 config.supportEmail=process.env.SUPPORT_EMAIL || config.supportEmail;
+config.operatorName=String(process.env.OPERATOR_NAME || config.operatorName || "").trim();
 config.ads.publisherId=process.env.ADSENSE_PUBLISHER_ID || config.ads.publisherId;
-if (config.supportEmail && !/^[a-zA-Z0-9.!#$%&'*+\-/=?^_`{|}~]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(config.supportEmail)) throw new Error('Invalid support email.');
+if (config.supportEmail && !require('./adsense-preflight').validSupportEmail(config.supportEmail)) throw new Error('Invalid support email.');
 if (config.ads.publisherId) validatePublisher(config.ads.publisherId);
 const cmpFile=path.join(root,'content/cmp-snippet.html');
 const cmp=fs.existsSync(cmpFile)?fs.readFileSync(cmpFile,'utf8'):'';
@@ -101,8 +102,8 @@ for(const guide of guides) {
   'phishing-and-remote-tracking':['temporary-email-and-privacy','missing-email-checklist']
  };
  const related=`<aside class="related-guides" aria-label="관련 가이드"><h2>함께 읽으면 좋은 가이드</h2><ul>${relatedSlugs[guide.slug].map(slug=>{const g=guides.find(g=>g.slug===slug);return `<li><a href="/guides/${slug}/">${escape(g.title)}</a></li>`;}).join('')}</ul></aside>`;
- const body=`<main id="main" class="container page-main"><nav class="breadcrumb" aria-label="현재 위치">${crumbs.map((c,i)=>`<a href="${c.path}"${i===2?' aria-current="page"':''}>${escape(c.name)}</a>`).join(' <span aria-hidden="true">/</span> ')}</nav>${heading(guide.title,guide.description)}<article class="article-body"><p class="article-meta">${escape(config.name)} 편집 · 2026년 9월 6일</p>${toc}${sections}${sources}${ad}${related}</article><p class="article-back"><a href="/guides/">← 전체 가이드</a> · <a href="/">무료 임시메일 사용하기</a></p></main>`;
- const schema=jsonLd([{'@type':'Article',headline:guide.title,description:guide.description,datePublished:'2026-09-06',dateModified:'2026-09-06',author:{'@id':config.origin+'/#organization'},publisher:{'@id':config.origin+'/#organization'},mainEntityOfPage:{'@id':config.origin+route+'#webpage'},inLanguage:'ko-KR'},{'@type':'BreadcrumbList',itemListElement:crumbs.map((c,i)=>({'@type':'ListItem',position:i+1,name:c.name,item:config.origin+c.path}))}]);
+ const body=`<main id="main" class="container page-main"><nav class="breadcrumb" aria-label="현재 위치">${crumbs.map((c,i)=>`<a href="${c.path}"${i===2?' aria-current="page"':''}>${escape(c.name)}</a>`).join(' <span aria-hidden="true">/</span> ')}</nav>${heading(guide.title,guide.description)}<article class="article-body"><p class="article-meta">${escape(config.name)} 편집 · 2026년 9월 7일</p>${toc}${sections}${sources}${ad}${related}</article><p class="article-back"><a href="/guides/">← 전체 가이드</a> · <a href="/">무료 임시메일 사용하기</a></p></main>`;
+ const schema=jsonLd([{'@type':'Article',headline:guide.title,description:guide.description,datePublished:'2026-09-06',dateModified:'2026-09-07',author:{'@id':config.origin+'/#organization'},publisher:{'@id':config.origin+'/#organization'},mainEntityOfPage:{'@id':config.origin+route+'#webpage'},inLanguage:'ko-KR'},{'@type':'BreadcrumbList',itemListElement:crumbs.map((c,i)=>({'@type':'ListItem',position:i+1,name:c.name,item:config.origin+c.path}))}]);
  save(route,layout(guide.title,guide.description,body,route,'guide',schema));
 }
 const faqBody=`<main id="main" class="container page-main">${heading('자주 묻는 질문','주소 생성, 메일함 이용기간, 수신 문제에 대한 답변입니다.')}<div class="faq-list">${faq.map(item=>`<details><summary>${escape(item.question)}</summary><p>${escape(item.answer)}</p></details>`).join('')}</div><p class="article-back">해결되지 않았다면 <a href="/contact/">문의 방법</a>을 확인해 주세요.</p></main>`;
@@ -118,6 +119,6 @@ if(!config.supportEmail)blockers.push('Public support/privacy contact email is n
 if(!config.ads.publisherId)blockers.push('AdSense publisher ID / ownership verification is not configured.');
 if(!config.ads.approved)blockers.push('AdSense site review has not been confirmed.');
 if(!config.ads.consentReady)blockers.push('Certified CMP / privacy messages have not been configured and verified.');
-fs.writeFileSync(path.join(root,'.build-report.json'),JSON.stringify({pages:routes.length,adsEnabled:guides.some(g=>canShowAds('/guides/'+g.slug+'/',config.ads)),blockers},null,2));
+fs.writeFileSync(path.join(root,'.build-report.json'),JSON.stringify({readiness:require('./adsense-preflight').readiness(config,{cmpInstalled:!!cmp.trim()}),pages:routes.length,adsEnabled:guides.some(g=>canShowAds('/guides/'+g.slug+'/',config.ads)),blockers},null,2));
 console.log('Built '+routes.length+' public pages, 404, sitemap, robots.txt and ads.txt. Ads: '+(config.ads.approved?'configured':'disabled')+'.');
 for(const blocker of blockers)console.log('Pending: '+blocker);

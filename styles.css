@@ -231,3 +231,6 @@ html:not([lang="ko"]) .mailbox-top{gap:12px;flex-wrap:wrap}
 html:not([lang="ko"]) .mailbox-bottom{gap:12px;flex-wrap:wrap}
 .home-faq{margin:36px 0}
 @media(max-width:600px){.language-links{gap:4px 14px;font-size:12px;padding:8px 16px}html:not([lang="ko"]) .address-box{flex-wrap:wrap}html:not([lang="ko"]) .address-box input{width:100%;min-width:0;flex-basis:100%}html:not([lang="ko"]) .address-box .button{flex:1 1 auto}html:not([lang="ko"]) .header-inner{gap:12px}html:not([lang="ko"]) .header-links{gap:12px;font-size:12px}html:not([lang="ko"]) .inbox-footer{flex-wrap:wrap;gap:8px}html:not([lang="ko"]) .steps{grid-template-columns:1fr}}
+/* Headings must wrap long translated words; Japanese also allows normal character boundaries. */
+h1,h2,h3{overflow-wrap:anywhere}
+html[lang="ja"] h1,html[lang="ja"] h2,html[lang="ja"] h3,html[lang="ja"] p{word-break:normal}
