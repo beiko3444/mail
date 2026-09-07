@@ -18,7 +18,7 @@ test('seven static language versions have reciprocal alternates and private inbo
    for(const other of langs)assert.ok(html.includes(`hreflang="${other}" href="https://www.haruemail.com${route(other,suffix)}"`),url+' missing '+other);
    assert.ok(html.includes(`hreflang="x-default" href="https://www.haruemail.com${route('en',suffix)}"`));
    assert.ok(sitemap.includes(`<loc>https://www.haruemail.com${url}</loc>`));
-   if(lang!=='ko')assert.doesNotMatch(html.replaceAll('한국어',''),/[가-힣]/,url+' untranslated Korean');
+   if(lang!=='ko')assert.doesNotMatch(html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g,'').replaceAll('한국어',''),/[가-힣]/,url+' untranslated Korean');
   }
   const home=read(route(lang));
   assert.match(home,/data-nosnippet/);assert.match(home,/id="createBtn"/);

@@ -1,5 +1,6 @@
 const fs=require('node:fs');
 const path=require('node:path');
+const seo=require('./seo');
 const languages=[['ko','한국어','ko-KR','ko_KR'],['en','English','en','en_US'],['ja','日本語','ja','ja_JP'],['es','Español','es','es_ES'],['pt','Português','pt','pt_BR'],['fr','Français','fr','fr_FR'],['de','Deutsch','de','de_DE']];
 const guideSpecs=[
  ['temporary-email-and-privacy','guidePrivacy','limitsBody'],
@@ -44,13 +45,13 @@ function buildLocales({root,dist,config,escape,verificationMarkup,koreanRoutes})
  const inboxSource=fs.readFileSync(path.join(root,'index.html'),'utf8');
  const appSource=fs.readFileSync(path.join(root,'app.js'),'utf8');
  for(const [lang,,intl,og] of languages.slice(1)){
-  const data=all[lang],t=key=>{if(!(key in data))throw new Error(`Missing ${lang}: ${key}`);return data[key];};
+  const data={...all[lang],homeTitle:seo.strategy.languages[lang].homeTitle},t=key=>{if(!(key in data))throw new Error(`Missing ${lang}: ${key}`);return data[key];};
   const e=key=>escape(t(key)),url=route=>localRoute(lang,route);
   const p=key=>`<p>${e(key)}</p>`;
   function layout(title,description,body,route,type='page',extra=[]){
-   const fullTitle=route==='/'?title:`${title} | HaruMail`;
-   const nodes=[{'@type':'Organization','@id':config.origin+'/#organization',name:'HaruMail',url:config.origin+'/en/about/'},{'@type':'WebPage','@id':config.origin+url(route)+'#webpage',url:config.origin+url(route),name:fullTitle,description,inLanguage:lang},...extra];
-   if(route==='/')nodes.push({'@type':'WebSite','@id':config.origin+'/en/#website',name:'HaruMail',url:config.origin+'/en/',inLanguage:languages.map(x=>x[0])});
+   const fullTitle=route==='/'?seo.title(lang,route,title):`${seo.title(lang,route,title)} | HaruMail`;
+   const nodes=[{'@type':'Organization','@id':config.origin+'/#organization',name:'HaruMail',url:config.origin+'/en/about/'},{'@type':'WebPage','@id':config.origin+url(route)+'#webpage',url:config.origin+url(route),name:fullTitle,description,inLanguage:lang,isPartOf:{'@id':config.origin+'/#website'}},...extra];
+   if(route==='/')nodes.push(seo.website(config));
    return `<!doctype html><html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${escape(fullTitle)}</title><meta name="description" content="${escape(description)}"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#245cdb"><link rel="canonical" href="${config.origin+url(route)}">${alternates(config.origin,route)}<meta property="og:type" content="${type==='guide'?'article':'website'}"><meta property="og:locale" content="${og}"><meta property="og:site_name" content="HaruMail"><meta property="og:title" content="${escape(fullTitle)}"><meta property="og:description" content="${escape(description)}"><meta property="og:url" content="${config.origin+url(route)}"><meta name="twitter:card" content="summary">${verificationMarkup}${config.ads.publisherId?`<meta name="google-adsense-account" content="ca-${escape(config.ads.publisherId)}">`:""}<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css">${jsonLd(nodes)}</head><body data-page-type="${type}"><a class="skip-link" href="#main">${e('본문으로 건너뛰기')}</a><header class="site-header"><div class="header-inner"><a class="brand" href="${url('/')}"><span class="brand-mark" aria-hidden="true">✉</span>HaruMail</a><nav class="header-links" aria-label="${e('주 메뉴')}"><a href="${url('/guides/')}">${e('이용 가이드')}</a><a href="${url('/faq/')}">${e('자주 묻는 질문')}</a></nav></div>${languageLinks(lang,route,escape,t('언어'))}</header><div class="site-body">${body}<footer class="site-footer"><div class="container"><div class="footer-top"><a href="${url('/')}" class="footer-brand">HaruMail</a><nav class="footer-links" aria-label="${e('서비스 안내')}">${[['about','서비스 소개'],['contact','문의'],['privacy','개인정보처리방침'],['terms','이용약관']].map(([r,k])=>`<a href="${url('/'+r+'/')}">${e(k)}</a>`).join('')}</nav></div><p class="footer-bottom">© 2026 HaruMail · ${e('footer')}</p></div></footer></div></body></html>`;
   }
   function save(route,title,description,body,type,extra){const local=url(route);fs.mkdirSync(path.join(dist,local),{recursive:true});fs.writeFileSync(path.join(dist,local,'index.html'),layout(title,description,body,route,type,extra));routes.push(local);}
@@ -80,7 +81,8 @@ function buildLocales({root,dist,config,escape,verificationMarkup,koreanRoutes})
    const sections=guideDetails[slug].map(([h,b],i)=>`<section id="detail-${i+1}"><h2>${e(h)}</h2>${p(b)}</section>`).join('');
    const sourceGuide=require('../content/guides.json').find(g=>g.slug===slug);
    const sources=`<div class="sources"><h2>${e('sourcesHeading')}</h2><ul>${sourceGuide.sources.map(source=>{const local=source.url.startsWith(config.origin+'/');const href=local?url(new URL(source.url).pathname)+new URL(source.url).hash:source.url;const label=local?t('개인정보처리방침'):(sourceLabels[source.url]||new URL(source.url).hostname+': '+new URL(source.url).pathname.split('/').filter(Boolean).pop().replaceAll('-',' '));return `<li><a href="${escape(href)}" rel="noopener noreferrer">${escape(label)}</a></li>`;}).join('')}</ul></div>`;
-   const content=`<nav class="breadcrumb" aria-label="${e('홈')}">${crumbs.map(c=>`<a href="${c.path}">${escape(c.name)}</a>`).join(' / ')}</nav><p class="article-meta">HaruMail · ${e('updated')}</p>${p(key+'Body')}${p(next)}${sections}<h2>${e('editorialHeading')}</h2>${p('editorialBody')}${sources}<aside class="related-guides"><h2>${e('관련 가이드')}</h2><ul>${related}</ul></aside><p><a href="${url('/')}">${e('무료 주소 만들기')}</a></p>`;
+   const toc=`<nav class="article-toc" aria-label="${escape(seo.strategy.languages[lang].toc)}"><h2>${escape(seo.strategy.languages[lang].toc)}</h2><ol>${guideDetails[slug].map(([h],i)=>`<li><a href="#detail-${i+1}">${e(h)}</a></li>`).join('')}</ol></nav>`;
+   const content=`<nav class="breadcrumb" aria-label="${e('홈')}">${crumbs.map((c,i)=>`<a href="${c.path}"${i===crumbs.length-1?' aria-current="page"':''}>${escape(c.name)}</a>`).join(' / ')}</nav><p class="article-meta">HaruMail · ${e('updated')}</p>${toc}${p(key+'Body')}${p(next)}${sections}<h2>${e('editorialHeading')}</h2>${p('editorialBody')}${sources}<aside class="related-guides"><h2>${e('관련 가이드')}</h2><ul>${related}</ul></aside><p><a href="${url('/')}">${e('무료 주소 만들기')}</a></p>`;
    const schema=[{'@type':'Article',headline:title,description,datePublished:'2026-09-07',dateModified:'2026-09-07',inLanguage:lang,author:{'@id':config.origin+'/#organization'},publisher:{'@id':config.origin+'/#organization'},mainEntityOfPage:{'@id':config.origin+url(route)+'#webpage'}},{'@type':'BreadcrumbList',itemListElement:crumbs.map((c,i)=>({'@type':'ListItem',position:i+1,name:c.name,item:config.origin+c.path}))}];
    save(route,title,description,document(title,description,content),'guide',schema);
   }

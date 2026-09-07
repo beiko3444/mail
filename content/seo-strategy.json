@@ -1,0 +1,22 @@
+{
+  "evidence": "Candidate phrases observed in public search results and native-language service pages; not ranked by measured search volume.",
+  "intents": {
+    "/": "create-temporary-inbox",
+    "/guides/": "learn-and-troubleshoot",
+    "/faq/": "service-questions",
+    "/guides/temporary-email-and-privacy/": "privacy-and-retention",
+    "/guides/temporary-email-alias-or-inbox/": "choose-email-type",
+    "/guides/missing-email-checklist/": "missing-email",
+    "/guides/responsible-email-testing/": "authorized-email-testing",
+    "/guides/phishing-and-remote-tracking/": "read-email-safely"
+  },
+  "languages": {
+    "ko": {"primary":"임시메일","secondary":["임시 이메일","일회용 이메일","무료 임시메일"],"homeTitle":"무료 임시메일·일회용 이메일 | 하루메일","guidesTitle":"임시메일 이용 가이드와 수신 문제 해결","faqTitle":"임시메일 자주 묻는 질문","toc":"이 글에서 알아볼 내용"},
+    "en": {"primary":"temp mail","secondary":["temporary email","disposable email","free temporary email"],"homeTitle":"Temp Mail — Free Temporary Email | HaruMail","guidesTitle":"Temporary Email Guides and Troubleshooting","faqTitle":"Temporary Email FAQ","toc":"In this guide"},
+    "ja": {"primary":"使い捨てメール","secondary":["捨てメアド","一時メール","登録不要"],"homeTitle":"使い捨てメール・捨てメアド 無料・登録不要 | HaruMail","guidesTitle":"使い捨てメールの使い方・受信トラブル対策","faqTitle":"使い捨てメールのよくある質問","toc":"このガイドの内容"},
+    "es": {"primary":"correo temporal","secondary":["correo desechable","email temporal","sin registro"],"homeTitle":"Correo temporal gratis y sin registro | HaruMail","guidesTitle":"Guías de correo temporal y problemas de recepción","faqTitle":"Preguntas frecuentes sobre correo temporal","toc":"En esta guía"},
+    "pt": {"primary":"email temporário","secondary":["email descartável","email temporário grátis","sem cadastro"],"homeTitle":"Email temporário grátis e sem cadastro | HaruMail","guidesTitle":"Guias de email temporário e problemas de recebimento","faqTitle":"Perguntas frequentes sobre email temporário","toc":"Neste guia"},
+    "fr": {"primary":"mail jetable","secondary":["email temporaire","email jetable","sans inscription"],"homeTitle":"Mail jetable gratuit et email temporaire | HaruMail","guidesTitle":"Guides de l’email temporaire et problèmes de réception","faqTitle":"Questions fréquentes sur l’email temporaire","toc":"Dans ce guide"},
+    "de": {"primary":"Wegwerf-E-Mail","secondary":["temporäre E-Mail","Temp Mail","ohne Anmeldung"],"homeTitle":"Wegwerf-E-Mail kostenlos ohne Anmeldung | HaruMail","guidesTitle":"Wegwerf-E-Mail: Anleitungen und Empfangsprobleme","faqTitle":"Häufige Fragen zur Wegwerf-E-Mail","toc":"In dieser Anleitung"}
+  }
+}

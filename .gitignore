@@ -9,3 +9,5 @@ node_modules/
 /logs/
 /.vercel/
 .vercel
+
+.seo-report.json

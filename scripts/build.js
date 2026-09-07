@@ -3,6 +3,7 @@ const path = require('node:path');
 const config = require('../site.config.json');
 const guides = require('../content/guides.json');
 const faq = require('../content/faq.json');
+const seo=require('./seo');
 const { canShowAds, validatePublisher } = require('./ads-policy');
 const root = path.join(__dirname,'..');
 const dist = path.join(root,'dist');
@@ -37,9 +38,9 @@ function icon(name) {
  return '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">'+paths[name]+'</svg>';
 }
 function layout(title,description,body,route,type='page',extra='') {
-  const fullTitle=route==='/'?'무료 임시메일·일회용 이메일 | 하루메일':title+' | '+config.name;
-  const nodes=[{'@type':'Organization','@id':config.origin+'/#organization',name:config.name,url:config.origin+'/about/'},{'@type':'WebPage','@id':config.origin+route+'#webpage',url:config.origin+route,name:fullTitle,description,inLanguage:'ko-KR'}];
-  if(route==='/')nodes.push({'@type':'WebSite','@id':config.origin+'/#website',name:config.name,url:config.origin+'/',inLanguage:'ko-KR',publisher:{'@id':config.origin+'/#organization'}});
+  const fullTitle=route==='/'?seo.title('ko',route,title):seo.title('ko',route,title)+' | '+config.name;
+  const nodes=[{'@type':'Organization','@id':config.origin+'/#organization',name:config.name,url:config.origin+'/about/'},{'@type':'WebPage','@id':config.origin+route+'#webpage',url:config.origin+route,name:fullTitle,description,inLanguage:'ko-KR',isPartOf:{'@id':config.origin+'/#website'}}];
+  if(route==='/')nodes.push(seo.website(config));
   const ads=type==='guide' && canShowAds(route,config.ads);
   return `<!doctype html>
 <html lang="ko">
@@ -113,6 +114,7 @@ fs.writeFileSync(path.join(dist,'404.html'),layout('페이지를 찾을 수 없�
 routes.push(...require('./i18n').buildLocales({root,dist,config,escape,verificationMarkup,koreanRoutes:[...routes]}));
 fs.writeFileSync(path.join(dist,'robots.txt'),'User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: '+config.origin+'/sitemap.xml\n');
 fs.writeFileSync(path.join(dist,'sitemap.xml'),'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+routes.map(route=>'<url><loc>'+escape(config.origin+route)+'</loc></url>').join('')+'</urlset>\n');
+fs.writeFileSync(path.join(root,'.seo-report.json'),JSON.stringify(seo.audit(dist,config.origin),null,2));
 fs.writeFileSync(path.join(dist,'ads.txt'),config.ads.publisherId?'google.com, '+config.ads.publisherId+', DIRECT, f08c47fec0942fa0\n':'# No advertising sellers are authorized in this build.\n');
 const blockers=[];
 if(!config.supportEmail)blockers.push('Public support/privacy contact email is not configured.');
